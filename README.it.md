@@ -46,6 +46,17 @@ Il progetto è ispirato a piattaforme come [ImmuniWeb](https://www.immuniweb.com
 
 > Le istruzioni di installazione verranno aggiunte durante lo sviluppo.
 
+## 📚 Documentazione
+
+### 🗄️ Schema del Database
+
+All'interno della cartella [`server/docs`](server/docs) è presente:
+
+- [`db-schema.png`](server/docs/db-schema.png): immagine dello schema ER del database
+- [`db-schema.sql`](server/docs/db-schema.sql): script SQL per la creazione del database
+
+Puoi anche visualizzarlo tramite [dbdocs.io](https://dbdocs.io) se preferisci una versione interattiva.
+
 ## 📜 Licenza
 
 Questo progetto è distribuito sotto licenza **MIT**. Vedi il file [LICENSE](./LICENSE) per i dettagli.

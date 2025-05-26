@@ -44,6 +44,17 @@ Inspired by platforms like [ImmuniWeb](https://www.immuniweb.com/), this project
 
 > Setup instructions will be added during development.
 
+## 📚 Documentation
+
+### 🗄️ Database Schema
+
+Inside the [`server/docs`](server/docs) folder you'll find:
+
+- [`db-schema.png`](server/docs/db-schema.png): image of the database ER diagram
+- [`db-schema.sql`](server/docs/db-schema.sql): SQL script to create the database
+
+You can also view it interactively via [dbdocs.io](https://dbdocs.io) if preferred.
+
 ## 📜 License
 
 This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
