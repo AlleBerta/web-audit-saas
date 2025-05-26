@@ -48,9 +48,10 @@ Inspired by platforms like [ImmuniWeb](https://www.immuniweb.com/), this project
 
 ### 🗄️ Database Schema
 
-Inside the [`server/docs`](server/docs) folder you'll find:
+![Database ER Diagram](./server/docs/db-schema.png)
 
-- [`db-schema.png`](server/docs/db-schema.png): image of the database ER diagram
+Inside the [`server/docs`](server/docs) folder you can also find:
+
 - [`db-schema.sql`](server/docs/db-schema.sql): SQL script to create the database
 
 You can also view it interactively via [dbdocs.io](https://dbdocs.io) if preferred.

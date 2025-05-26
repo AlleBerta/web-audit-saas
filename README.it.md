@@ -50,9 +50,10 @@ Il progetto è ispirato a piattaforme come [ImmuniWeb](https://www.immuniweb.com
 
 ### 🗄️ Schema del Database
 
-All'interno della cartella [`server/docs`](server/docs) è presente:
+![Schema ER del Database](./server/docs/db-schema.png)
 
-- [`db-schema.png`](server/docs/db-schema.png): immagine dello schema ER del database
+All'interno della cartella [`server/docs`](server/docs) è presente anche:
+
 - [`db-schema.sql`](server/docs/db-schema.sql): script SQL per la creazione del database
 
 Puoi anche visualizzarlo tramite [dbdocs.io](https://dbdocs.io) se preferisci una versione interattiva.
