@@ -10,8 +10,8 @@ import {
   UpdatedAt,
   HasMany,
 } from 'sequelize-typescript';
-import { Project } from './Project';
-import { ScanResult } from './ScanResult';
+import { Project } from './ProjectModel';
+import { ScanResult } from './ScanResultModel';
 
 @Table({ tableName: 'scans' })
 export class Scan extends Model<Scan> {
@@ -72,5 +72,5 @@ export class Scan extends Model<Scan> {
   projects!: Project[];
 
   @HasMany(() => ScanResult, { onDelete: 'CASCADE' })
-  scanResults!: ScanResult[];
+  scanResults?: ScanResult[];
 }

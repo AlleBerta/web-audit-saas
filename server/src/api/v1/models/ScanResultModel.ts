@@ -8,7 +8,7 @@ import {
   CreatedAt,
   BelongsTo,
 } from 'sequelize-typescript';
-import { Scan } from './Scan';
+import { Scan } from './ScanModel';
 
 @Table({ tableName: 'scan_results' })
 export class ScanResult extends Model<ScanResult> {

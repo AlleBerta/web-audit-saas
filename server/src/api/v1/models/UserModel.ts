@@ -12,14 +12,17 @@ import {
   UpdatedAt,
   HasMany,
 } from 'sequelize-typescript';
-import { Project } from './Project';
+
+import { CreationOptional } from 'sequelize';
+
+import { Project } from './ProjectModel';
 
 @Table({ tableName: 'users', timestamps: true })
-export class User extends Model<User> {
+export class User extends Model {
   @PrimaryKey
   @AutoIncrement
   @Column({ type: DataType.INTEGER })
-  id!: number;
+  id!: CreationOptional<number>; // è opzionale al momento della creazione
 
   @Unique
   @AllowNull(false)
@@ -40,8 +43,8 @@ export class User extends Model<User> {
 
   @AllowNull(false)
   @Default('user') // valore di default 'user'
-  @Column({ type: DataType.ENUM('admin', 'user') })
-  role!: 'admin' | 'user';
+  @Column({ type: DataType.STRING })
+  role!: string;
 
   @CreatedAt
   @Column({ field: 'created_at' })
@@ -52,5 +55,5 @@ export class User extends Model<User> {
   updatedAt!: Date;
 
   @HasMany(() => Project, { onDelete: 'CASCADE' })
-  projects!: Project[]; // projects è la proprietà per ricavare tutti i progetto collegato ad un utente
+  projects?: CreationOptional<Project[]>; // projects è la proprietà per ricavare tutti i progetto collegato ad un utente
 }

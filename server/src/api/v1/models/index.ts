@@ -1,9 +1,9 @@
 // src/models/index.ts
 import { sequelize } from '@config/database';
-import { User } from './User';
-import { Project } from './Project';
-import { Scan } from './Scan';
-import { ScanResult } from './ScanResult';
+import { User } from './UserModel';
+import { Project } from './ProjectModel';
+import { Scan } from './ScanModel';
+import { ScanResult } from './ScanResultModel';
 
 // Se non usi il pattern `models: [ ... ]` in database.ts,
 // puoi anche registrare manualmente:

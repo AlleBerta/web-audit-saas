@@ -1,11 +1,18 @@
-import config from './config/config';
 import express from 'express';
+import { json, urlencoded } from 'body-parser';
+import config from './config/config';
 import { db } from '@api/v1/models';
+import userRoutes from '@api/v1/routes/UserRoutes';
+import { errorHandler } from '@api/v1/middlewares/errorHandler';
 
 const app = express();
+app.use(json());
+app.use(urlencoded({ extended: true }));
 const port = Number(config.PORT) || 3000;
 
 // (Qui middleware, routes, ecc.)
+app.use('/users', userRoutes);
+app.use(errorHandler); // Gestisce gli errori
 
 // Prima di avviare il server, sincronizziamo il DB
 db.sequelize
