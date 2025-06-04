@@ -8,7 +8,7 @@ import { errorHandler } from '@api/v1/middlewares/errorHandler';
 const app = express();
 app.use(json());
 app.use(urlencoded({ extended: true }));
-const port = Number(config.PORT) || 3000;
+const port = Number(config.PORT) || 3001;
 
 // (Qui middleware, routes, ecc.)
 app.use('/users', userRoutes);
