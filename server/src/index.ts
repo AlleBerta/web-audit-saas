@@ -1,14 +1,25 @@
 import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'body-parser';
 import config from './config/config';
 import { db } from '@api/v1/models';
 import userRoutes from '@api/v1/routes/UserRoutes';
 import { errorHandler } from '@api/v1/middlewares/errorHandler';
 
+const port = Number(config.SERVER_PORT);
+const client_port = Number(config.CLIENT_PORT);
+
 const app = express();
 app.use(json());
 app.use(urlencoded({ extended: true }));
-const port = Number(config.PORT) || 3001;
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: `http://localhost:${client_port}`,
+    credentials: true,
+  })
+);
 
 // (Qui middleware, routes, ecc.)
 app.use('/users', userRoutes);
@@ -16,7 +27,7 @@ app.use(errorHandler); // Gestisce gli errori
 
 // Prima di avviare il server, sincronizziamo il DB
 db.sequelize
-  .sync({ alter: true }) // o { force: true } per drop+create
+  .sync() // { alter: true } per modificare, { force: true } per drop+create
   .then(() => {
     console.log('✅ Database synchronized');
     app.listen(port, () => {

@@ -50,15 +50,10 @@ export const getUser = async (req: Request, res: Response, next: NextFunction) =
  */
 export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, name, surname, password, role } = req.body;
+    const { email, name, surname, password } = req.body;
 
-    if (!email || !name || !surname || !password || !role) {
+    if (!email || !name || !surname || !password) {
       throw new ApiError(constants.BAD_REQUEST, 'Tutti i campi sono obbligatori.');
-    }
-
-    const validRoles = ['admin', 'user'];
-    if (!validRoles.includes(role)) {
-      throw new ApiError(constants.BAD_REQUEST, 'Ruolo non valido.');
     }
 
     const existingUser = await User.findOne({ where: { email } });
@@ -68,12 +63,12 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
 
     const hashedPassword = await bcrypt.hash(password, Number(config.PSW_SALT));
 
+    // Per
     const newUser = await User.create({
       email,
       name,
       surname,
       password: hashedPassword,
-      role,
     });
 
     sendResponse(res, {
@@ -95,7 +90,7 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
 
 /**
  * @desc Login user
- * @route POST /users/login
+ * @route POST /user/login
  * @access Public
  */
 export const loginUsers = async (req: Request, res: Response, next: NextFunction) => {
