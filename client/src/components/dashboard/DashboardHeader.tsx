@@ -1,6 +1,6 @@
-
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { SITE_NAME } from '../../config/conts';
 
 export const DashboardHeader = () => {
   return (
@@ -8,14 +8,20 @@ export const DashboardHeader = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-8">
           <Link to="/" className="text-xl font-bold text-blue-600">
-            Your ImmuniWeb® Neuron Projects
+            Your {SITE_NAME} Projects
           </Link>
         </div>
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" className="text-orange-600 border border-orange-600 hover:bg-orange-50">
+          <Button
+            variant="ghost"
+            className="text-orange-600 border border-orange-600 hover:bg-orange-50"
+          >
             📖 User Manual
           </Button>
-          <Button variant="ghost" className="text-orange-600 border border-orange-600 hover:bg-orange-50">
+          <Button
+            variant="ghost"
+            className="text-orange-600 border border-orange-600 hover:bg-orange-50"
+          >
             ⚙️ API & User Access
           </Button>
         </div>

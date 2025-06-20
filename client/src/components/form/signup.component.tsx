@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import api from '@/lib/axios';
 import { ApiResponse } from '@/types/server_response.types';
+import { SITE_NAME } from '../../config/conts';
 
 const initialValues: SignupFormData = {
   name: '',
@@ -38,7 +39,7 @@ const SignupComponent = () => {
       } else {
         toast({
           title: 'Account Created',
-          description: 'Welcome to ImmuniWeb® Neuron! Please sign in.',
+          description: `Welcome to ${SITE_NAME}! Please sign in.`,
         });
         navigate('/login');
       }

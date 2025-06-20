@@ -1,30 +1,14 @@
+import { Nav } from '../components/Nav';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { SITE_NAME } from '../config/conts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Homepage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-blue-600">ImmuniWeb® Neuron</h1>
-            </div>
-            <div className="flex space-x-4">
-              <Link to="/login">
-                <Button variant="ghost" className="text-gray-600 hover:text-blue-600">
-                  Login
-                </Button>
-              </Link>
-              <Link to="/signup">
-                <Button className="bg-blue-600 hover:bg-blue-700">Sign Up</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Nav />
 
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">

@@ -1,15 +1,16 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoginComponent } from '@/components/form';
+import { SITE_NAME } from '../config/conts';
 
 const Login = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
+        <img src="/android-chrome-192x192.png" alt="Logo" className="mx-auto w-24 h-24" />
         <div className="text-center mb-8">
           <Link to="/" className="text-2xl font-bold text-blue-600">
-            ImmuniWeb® Neuron
+            {SITE_NAME}
           </Link>
           <p className="text-gray-600 mt-2">Sign in to your account</p>
         </div>

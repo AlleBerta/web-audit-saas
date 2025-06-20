@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import api from '@/lib/axios';
 import { ApiResponse } from '@/types/server_response.types';
+import { SITE_NAME } from '../../config/conts';
 
 const initialValues: LoginFormData = {
   email: '',
@@ -28,7 +29,7 @@ const LoginComponent = () => {
       if (response.data.success) {
         toast({
           title: 'Login Successful',
-          description: 'Welcome back to ImmuniWeb® Neuron',
+          description: `Welcome back to ${SITE_NAME}`,
         });
         navigate('/');
       }
