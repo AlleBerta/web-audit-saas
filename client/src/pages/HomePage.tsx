@@ -42,7 +42,7 @@ const Homepage = () => {
             </Link>
             <Link to="/dashboard">
               <Button size="lg" variant="outline" className="px-8 py-3">
-                View Demo
+                See Your Project
               </Button>
             </Link>
           </div>

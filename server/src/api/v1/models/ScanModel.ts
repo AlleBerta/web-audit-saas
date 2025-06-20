@@ -12,9 +12,10 @@ import {
 } from 'sequelize-typescript';
 import { Project } from './ProjectModel';
 import { ScanResult } from './ScanResultModel';
+import { ScanAttributes, ScanCreationAttributes } from './interfaces/scan.interface';
 
 @Table({ tableName: 'scans' })
-export class Scan extends Model<Scan> {
+export class Scan extends Model<ScanAttributes, ScanCreationAttributes> {
   @Column({
     type: DataType.INTEGER,
     autoIncrement: true,

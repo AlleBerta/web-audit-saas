@@ -1,9 +1,10 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import config from '@config/config';
-import { sendResponse, ApiError, constants } from '../utils/';
+import { sendResponse, ApiError, constants, generateSessionTokens } from '../utils/';
 import { User } from '../models/UserModel';
 import { Project } from '../models/ProjectModel';
+
 // GET
 export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -23,11 +24,38 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-// GET /:id
+/**
+ * @description Get user from email
+ * @access private
+ */
 export const getUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id;
     const user = await User.findByPk(id, {
+      attributes: { exclude: ['password'] },
+      include: [Project],
+    });
+
+    sendResponse(res, {
+      statusCode: constants.OK,
+      success: true,
+      message: 'Operazione completata con successo',
+      data: user,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * @description Get user from email
+ * @access public
+ */
+export const getUserByEmail = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const email = req.body;
+    const user = await User.findOne({
+      where: { email: email },
       attributes: { exclude: ['password'] },
       include: [Project],
     });
@@ -101,17 +129,19 @@ export const loginUsers = async (req: Request, res: Response, next: NextFunction
     }
 
     const existingUser = await User.findOne({ where: { email } });
-    if (existingUser && (await bcrypt.compare(password, existingUser.password))) {
-      // Genero il token
-
-      sendResponse(res, {
-        statusCode: constants.OK,
-        success: true,
-        message: 'Utente loggato con successo',
-      });
-    } else {
+    if (!existingUser || !(await bcrypt.compare(password, existingUser.password))) {
       throw new ApiError(constants.UNAUTHORIZED, 'Email o password non valida');
     }
+
+    // Chiamo direttamente l’handler per creare la sessione
+    const userPayload = await generateSessionTokens(existingUser, res);
+
+    sendResponse(res, {
+      statusCode: constants.OK,
+      success: true,
+      message: 'Utente loggato con successo',
+      data: userPayload,
+    });
   } catch (err) {
     next(err);
   }
@@ -169,8 +199,9 @@ export const modifyUserPsw = async (req: Request, res: Response, next: NextFunct
   try {
     const { oldPsw, newPsw } = req.body;
     // Attualmente id è vuoto, crea prima l'access token, poi ricavi l'id da lì
-    const id = req.params.id;
-
+    //@ts-ignore
+    const id = req.user.id;
+    console.log('id: ' + id);
     if (!oldPsw || !newPsw) {
       throw new ApiError(constants.BAD_REQUEST, 'Tutti i campi sono obbligatori.');
     }

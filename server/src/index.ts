@@ -5,7 +5,9 @@ import { json, urlencoded } from 'body-parser';
 import config from './config/config';
 import { db } from '@api/v1/models';
 import userRoutes from '@api/v1/routes/UserRoutes';
+import projectRouter from '@api/v1/routes/ProjectRoutes';
 import { errorHandler } from '@api/v1/middlewares/errorHandler';
+import deserializeUser from '@api/v1/middlewares/deserializeUser';
 
 const port = Number(config.SERVER_PORT);
 const client_port = Number(config.CLIENT_PORT);
@@ -20,11 +22,17 @@ app.use(
     credentials: true,
   })
 );
+// routes
+app.use('/user', userRoutes);
 
-// (Qui middleware, routes, ecc.)
-app.use('/users', userRoutes);
+app.use(deserializeUser);
+// Routes protette
+// Projects, etc...
+
+// middlewares
 app.use(errorHandler); // Gestisce gli errori
 
+app.use('/project', projectRouter);
 // Prima di avviare il server, sincronizziamo il DB
 db.sequelize
   .sync() // { alter: true } per modificare, { force: true } per drop+create

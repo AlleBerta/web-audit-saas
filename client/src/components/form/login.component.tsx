@@ -23,7 +23,7 @@ const LoginComponent = () => {
     // like making an API call or updating the store
     try {
       // Aggiungo anche il campo 'tipo="user"' come default
-      const response = await api.post<ApiResponse<UserResponse>>('/users/login', values);
+      const response = await api.post<ApiResponse<UserResponse>>('/user/login', values);
 
       if (response.data.success) {
         toast({
@@ -34,6 +34,7 @@ const LoginComponent = () => {
       }
       console.log(response.data);
     } catch (error: any) {
+      console.log(error);
       if (error.response) {
         toast({
           title: 'Errore!',

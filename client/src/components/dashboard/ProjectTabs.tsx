@@ -1,5 +1,4 @@
-
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 
 interface ProjectTabsProps {
   activeProject: string;
@@ -8,13 +7,13 @@ interface ProjectTabsProps {
 
 export const ProjectTabs = ({ activeProject, onProjectChange }: ProjectTabsProps) => {
   const tabs = [
-    { name: "Discovery CTEM", count: 5, color: "bg-blue-100 text-blue-700" },
-    { name: "Discovery TPRM", count: 3, color: "bg-blue-100 text-blue-700" },
-    { name: "Neuron", count: 4, color: "bg-blue-600 text-white" },
-    { name: "Neuron Mobile", count: 1, color: "bg-blue-100 text-blue-700" },
-    { name: "On-Demand", count: 2, color: "bg-blue-100 text-blue-700" },
-    { name: "MobileSuite", count: 1, color: "bg-blue-100 text-blue-700" },
-    { name: "Continuous", count: 1, color: "bg-blue-100 text-blue-700" }
+    { name: 'Discovery CTEM', count: 5, color: 'bg-blue-100 text-blue-700' },
+    { name: 'Discovery TPRM', count: 3, color: 'bg-blue-100 text-blue-700' },
+    { name: 'Neuron', count: 4, color: 'bg-blue-600 text-white' },
+    { name: 'Neuron Mobile', count: 1, color: 'bg-blue-100 text-blue-700' },
+    { name: 'On-Demand', count: 2, color: 'bg-blue-100 text-blue-700' },
+    { name: 'MobileSuite', count: 1, color: 'bg-blue-100 text-blue-700' },
+    { name: 'Continuous', count: 1, color: 'bg-blue-100 text-blue-700' },
   ];
 
   return (
@@ -35,7 +34,7 @@ export const ProjectTabs = ({ activeProject, onProjectChange }: ProjectTabsProps
           ))}
         </div>
       </div>
-      
+
       <div className="py-3 border-t border-gray-100">
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center space-x-4">
@@ -44,8 +43,13 @@ export const ProjectTabs = ({ activeProject, onProjectChange }: ProjectTabsProps
             </span>
           </div>
           <div className="flex items-center space-x-4 text-gray-600">
-            <span>Subscription Valid Until: <span className="text-green-600 font-medium">July 1, 2026</span></span>
-            <span>Targets Left: <span className="font-medium">93</span></span>
+            <span>
+              Subscription Valid Until:{' '}
+              <span className="text-green-600 font-medium">July 1, 2026</span>
+            </span>
+            <span>
+              Targets Left: <span className="font-medium">93</span>
+            </span>
             <button className="text-blue-600 hover:underline">[View History]</button>
           </div>
         </div>

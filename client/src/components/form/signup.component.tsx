@@ -27,7 +27,7 @@ const SignupComponent = () => {
     // like making an API call or updating the store
     try {
       // Aggiungo anche il campo 'tipo="user"' come default
-      const response = await api.post<ApiResponse<UserResponse>>('/users/register', values);
+      const response = await api.post<ApiResponse<UserResponse>>('/user/register', values);
 
       if (!response.data.success) {
         toast({
