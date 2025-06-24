@@ -17,9 +17,9 @@ export function signJWT(payload: object, expiresIn?: StringValue | number) {
 }
 
 // verify jwt
-export function verifyJWT(token: string) {
+export function verifyJWT<T>(token: string): { payload: T | null; expired: boolean } {
   try {
-    const decoded = verify(token, config.JWT_PUBLIC_KEY);
+    const decoded = verify(token, config.JWT_PUBLIC_KEY) as T;
     return { payload: decoded, expired: false };
   } catch (error) {
     if (error instanceof TokenExpiredError) {

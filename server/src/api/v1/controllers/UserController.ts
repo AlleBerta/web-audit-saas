@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import config from '@config/config';
-import { createSession, sessionTokenHandler } from './SessionController';
+import { createSession } from './SessionController';
 import { sendResponse, ApiError, constants } from '../utils/';
 import { User } from '../models/UserModel';
 import { Project } from '../models/ProjectModel';
@@ -23,23 +23,6 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
     });
   } catch (err) {
     next(err); // Lascia che sia l'error handler globale a gestirlo
-  }
-};
-
-/**
- * @description Get user from id
- * @access private
- */
-export const getUser = async (id: number) => {
-  try {
-    const user = await User.findByPk(id, {
-      attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
-      // include: [Project],
-    });
-    const retUser = user?.dataValues;
-    return { retUser };
-  } catch (err) {
-    throw new ApiError(constants.BAD_REQUEST, 'Errore interno');
   }
 };
 
@@ -215,13 +198,19 @@ export const modifyUserInfo = async (req: Request, res: Response, next: NextFunc
  * @route PUT /users/modifyPass/
  * @access Private
  */
-export const modifyUserPsw = async (req: Request, res: Response, next: NextFunction) => {
+export const modifyUserPsw = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const { oldPsw, newPsw } = req.body;
     // Attualmente id è vuoto, crea prima l'access token, poi ricavi l'id da lì
-    //@ts-ignore
-    const id = req.user.id;
-    console.log('id: ' + id);
+    if (!req.user) {
+      throw new ApiError(constants.UNAUTHORIZED, 'Utente non autenticato');
+    }
+    const id = req.user?.id;
+    const { oldPsw, newPsw } = req.body;
+
     if (!oldPsw || !newPsw) {
       throw new ApiError(constants.BAD_REQUEST, 'Tutti i campi sono obbligatori.');
     }
