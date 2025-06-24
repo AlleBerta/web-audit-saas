@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { RequestHandler } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'body-parser';
@@ -8,6 +8,7 @@ import userRoutes from '@api/v1/routes/UserRoutes';
 import projectRouter from '@api/v1/routes/ProjectRoutes';
 import { errorHandler } from '@api/v1/middlewares/errorHandler';
 import deserializeUser from '@api/v1/middlewares/deserializeUser';
+import { requireUser } from '@api/v1/middlewares/requireUser';
 
 const port = Number(config.SERVER_PORT);
 const client_port = Number(config.CLIENT_PORT);
@@ -25,14 +26,16 @@ app.use(
 // routes
 app.use('/user', userRoutes);
 
+// middlewares che gestiscono il login
 app.use(deserializeUser);
-// Routes protette
-// Projects, etc...
+app.use(requireUser as unknown as RequestHandler);
+
+// Routes tutte protette
+app.use('/project', projectRouter);
 
 // middlewares
 app.use(errorHandler); // Gestisce gli errori
 
-app.use('/project', projectRouter);
 // Prima di avviare il server, sincronizziamo il DB
 db.sequelize
   .sync() // { alter: true } per modificare, { force: true } per drop+create

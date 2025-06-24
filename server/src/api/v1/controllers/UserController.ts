@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import config from '@config/config';
-import { sendResponse, ApiError, constants, generateSessionTokens } from '../utils/';
+import { createSession, sessionTokenHandler } from './SessionController';
+import { sendResponse, ApiError, constants } from '../utils/';
 import { User } from '../models/UserModel';
 import { Project } from '../models/ProjectModel';
+import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
 
 // GET
 export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
@@ -25,25 +27,19 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
 };
 
 /**
- * @description Get user from email
+ * @description Get user from id
  * @access private
  */
-export const getUser = async (req: Request, res: Response, next: NextFunction) => {
+export const getUser = async (id: number) => {
   try {
-    const id = req.params.id;
     const user = await User.findByPk(id, {
-      attributes: { exclude: ['password'] },
-      include: [Project],
+      attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
+      // include: [Project],
     });
-
-    sendResponse(res, {
-      statusCode: constants.OK,
-      success: true,
-      message: 'Operazione completata con successo',
-      data: user,
-    });
+    const retUser = user?.dataValues;
+    return { retUser };
   } catch (err) {
-    next(err);
+    throw new ApiError(constants.BAD_REQUEST, 'Errore interno');
   }
 };
 
@@ -133,8 +129,8 @@ export const loginUsers = async (req: Request, res: Response, next: NextFunction
       throw new ApiError(constants.UNAUTHORIZED, 'Email o password non valida');
     }
 
-    // Chiamo direttamente l’handler per creare la sessione
-    const userPayload = await generateSessionTokens(existingUser, res);
+    // Creo la sessione
+    const userPayload = await createSession(existingUser, res);
 
     sendResponse(res, {
       statusCode: constants.OK,
@@ -148,8 +144,32 @@ export const loginUsers = async (req: Request, res: Response, next: NextFunction
 };
 
 /**
+ * @description Get user info
+ * @route GET /user/:id
+ * @access private
+ */
+export const getUserInfo = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const id = req.user?.id;
+    const user = await User.findByPk(id, {
+      attributes: { exclude: ['password'] },
+      include: [Project],
+    });
+
+    sendResponse(res, {
+      statusCode: constants.OK,
+      success: true,
+      message: 'Operazione completata con successo',
+      data: user,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * @desc Modify user info
- * @route PUT /users/modifyInfo/
+ * @route PUT /user/modifyInfo/
  * @access Private
  */
 export const modifyUserInfo = async (req: Request, res: Response, next: NextFunction) => {

@@ -1,8 +1,13 @@
 import { Router } from 'express';
-import { createProject } from '../controllers/ProjectController';
+import { RequestHandler } from 'express';
+import { createProject, getProjects } from '../controllers/ProjectController';
 
 const router = Router();
 
-router.get('/test', createProject);
+// router.get('/', getProjects);
+router.get('/', getProjects as unknown as RequestHandler);
+
+// RIGUARDALA
+router.post('/', createProject as unknown as RequestHandler);
 
 export default router;
