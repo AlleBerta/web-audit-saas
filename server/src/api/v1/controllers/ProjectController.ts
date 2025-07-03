@@ -19,8 +19,9 @@ export const createProject = async (
       });
     }
 
-    const { domain, name } = req.body;
-    if (!domain || !name) {
+    let { domain, name } = req.body;
+    domain = !domain || typeof domain !== 'string' ? '' : domain.trim();
+    if (!name) {
       throw new ApiError(constants.BAD_REQUEST, 'Tutti i campi sono obbligatori.');
     }
 

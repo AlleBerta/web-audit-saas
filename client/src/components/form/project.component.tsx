@@ -1,19 +1,29 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import validationSchema from '@/schemas/project.schema';
+import { useToast } from '@/hooks/use-toast';
+import { ProjectFormData, ProjectResponse } from '@/types/project.types';
+import { useFormik } from 'formik';
+import { ApiResponse } from '@/types/server_response.types';
+import api from '@/lib/axios';
 
 interface Tab {
   name: string;
   count: number;
 }
 
+const initialValues: ProjectFormData = {
+  name: '',
+  domain: '',
+};
+
 const ProjectTabs = () => {
   const [activeProject, setActiveProject] = useState('');
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [isCreating, setIsCreating] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   // Simula il caricamento dei progetti (sostituisci con la chiamata axios)
   useEffect(() => {
@@ -22,8 +32,8 @@ const ProjectTabs = () => {
         setLoading(true);
 
         // Per ora uso dati mock - sostituisci con:
-        const response = await axios.get('/project/');
-        setTabs(response.data);
+        // const response = await axios.get('/project/');
+        // setTabs(response.data);
 
         const mockTabs = [
           { name: 'Discovery CTEM', count: 5 },
@@ -49,59 +59,76 @@ const ProjectTabs = () => {
     };
 
     loadProjects();
-  }, []);
+  }, [toast]);
+
+  const onSubmit = async (values: ProjectFormData) => {
+    try {
+      // Chiamata API per creare il progetto
+      const response = await api.post<ApiResponse<ProjectResponse>>('/project', values);
+      console.log('Progetto creato:', response.data);
+      const newProject = {
+        name: values.name.trim(),
+        count: 0, // Inizialmente il conteggio è 0
+      };
+
+      // Per ora simulo la creazione
+      // const newProject = {
+      //   name: newProjectName.trim(),
+      //   count: 0,
+      // };
+
+      // Aggiungi alla lista e rendilo attivo
+      setTabs((prevTabs) => [...prevTabs, newProject]);
+      setActiveProject(newProject.name);
+
+      // Reset del form
+      formik.resetForm();
+      setIsCreating(false);
+
+      toast({
+        title: 'Progetto creato',
+        description: `Il progetto "${newProject.name}" è stato creato con successo.`,
+      });
+    } catch (error) {
+      console.error('Errore nella creazione del progetto:', error);
+      toast({
+        title: 'Errore',
+        description: 'Errore durante la creazione del progetto. Riprova.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const formik = useFormik<ProjectFormData>({
+    validationSchema,
+    initialValues,
+    onSubmit,
+  });
 
   const handleCreateClick = () => {
     setIsCreating(true);
   };
 
-  const handleCreateProject = async () => {
-    if (newProjectName.trim()) {
-      try {
-        // Sostituisci con la chiamata axios:
-        // const response = await axios.post('/api/projects', {
-        //   name: newProjectName.trim(),
-        //   count: 0
-        // });
-        // const newProject = response.data;
-
-        // Per ora simulo la creazione
-        const newProject = {
-          name: newProjectName.trim(),
-          count: 0,
-        };
-
-        // Aggiungi alla lista e rendilo attivo
-        setTabs((prevTabs) => [...prevTabs, newProject]);
-        setActiveProject(newProject.name);
-
-        // Reset del form
-        setNewProjectName('');
-        setIsCreating(false);
-
-        alert('Progetto creato con successo!');
-      } catch (error) {
-        console.error('Errore nella creazione del progetto:', error);
-        alert('Errore nella creazione del progetto');
-      }
-    }
-  };
-
   const handleCancel = () => {
-    setNewProjectName('');
+    formik.resetForm();
     setIsCreating(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleCreateProject();
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Escape') {
       handleCancel();
     }
   };
 
   const handleProjectChange = (projectName: string) => {
     setActiveProject(projectName);
+
+    // Ricavo i dati del progetto selezionato
+    const selectedProject = tabs.find((tab) => tab.name === projectName);
+    if (selectedProject) {
+      console.log('Progetto selezionato:', selectedProject);
+      // Qui puoi fare qualcosa con il progetto selezionato, come caricare i dati specifici
+    }
   };
 
   if (loading) {
@@ -122,29 +149,38 @@ const ProjectTabs = () => {
           + CREATE NEW PROJECT
         </Button>
       ) : (
-        <div className="flex items-center space-x-2">
-          <Input
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Nome del progetto..."
-            className="w-48 h-8 text-sm"
-            autoFocus
-          />
-          <Button
-            onClick={handleCreateProject}
-            disabled={!newProjectName.trim()}
-            className="bg-green-400 hover:bg-green-500 disabled:bg-gray-400 text-white rounded-sm px-2 py-1 text-xs"
-          >
-            ✓
-          </Button>
-          <Button
-            onClick={handleCancel}
-            className="bg-red-400 hover:bg-red-500 text-white rounded-sm px-2 py-1 text-xs"
-          >
-            ✕
-          </Button>
-        </div>
+        <form onSubmit={formik.handleSubmit} className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2">
+            <Input
+              id="name"
+              name="name"
+              type="text"
+              value={formik.values.name}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              onKeyDown={handleKeyPress}
+              placeholder="Nome del progetto..."
+              className="w-48 h-8 text-sm"
+              autoFocus
+            />
+            {formik.touched.name && formik.errors.name && (
+              <div className="text-red-500 text-xs">{formik.errors.name}</div>
+            )}
+            <Button
+              type="submit"
+              disabled={!formik.values.name.trim() || formik.isSubmitting}
+              className="bg-green-400 hover:bg-green-500 disabled:bg-gray-400 text-white rounded-sm px-2 py-1 text-xs"
+            >
+              {formik.isSubmitting ? '...' : '✓'}
+            </Button>
+            <Button
+              onClick={handleCancel}
+              className="bg-red-400 hover:bg-red-500 text-white rounded-sm px-2 py-1 text-xs"
+            >
+              ✕
+            </Button>
+          </div>
+        </form>
       )}
 
       <div className="flex space-x-1">

@@ -4,9 +4,6 @@ import { signJWT, constants } from './index';
 import { ApiError } from './error';
 
 export function generateAccessCookie(user: User, res: Response) {
-  console.log(
-    '---------------------------------------------------------\nEntro quaaaa\n---------------------------------------------------------'
-  );
   try {
     const accessToken = signJWT(
       {
