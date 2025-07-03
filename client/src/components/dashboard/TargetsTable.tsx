@@ -1,44 +1,50 @@
-
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { PropsTargets } from '@/types/target.types';
+import { Target } from '@/types/target.types';
 
 const targets = [
   {
-    url: "home.example.com",
-    ip: "93.184.216.34",
-    auth: "None",
-    status: "Finished",
+    url: 'home.example.com',
+    ip: '93.184.216.34',
+    auth: 'None',
+    status: 'Finished',
     newEvents: 2,
-    nextScan: "Unscheduled",
-    lastScan: "Jul 4 2024, 15:35 CEST",
+    nextScan: 'Unscheduled',
+    lastScan: 'Jul 4 2024, 15:35 CEST',
     vulnerabilities: { critical: 1, high: 0, medium: 3, low: 0 },
-    hasError: false
+    hasError: false,
   },
   {
-    url: "marketing24.example.com",
-    ip: "93.184.216.39",
-    auth: "None",
-    status: "Unscheduled",
+    url: 'marketing24.example.com',
+    ip: '93.184.216.39',
+    auth: 'None',
+    status: 'Unscheduled',
     newEvents: 0,
-    nextScan: "Unscheduled",
-    lastScan: "Never",
+    nextScan: 'Unscheduled',
+    lastScan: 'Never',
     vulnerabilities: { critical: 0, high: 4, medium: 0, low: 0 },
-    hasError: false
+    hasError: false,
   },
   {
-    url: "promotional.example.com",
-    ip: "93.184.216.99",
-    auth: "None",
-    status: "Error",
+    url: 'promotional.example.com',
+    ip: '93.184.216.99',
+    auth: 'None',
+    status: 'Error',
     newEvents: 2,
-    nextScan: "Unscheduled",
-    lastScan: "Mar 14 2024, 19:39 CEST",
+    nextScan: 'Unscheduled',
+    lastScan: 'Mar 14 2024, 19:39 CEST',
     vulnerabilities: { critical: 2, high: 3, medium: 0, low: 3 },
-    hasError: true
-  }
+    hasError: true,
+  },
 ];
 
-export const TargetsTable = () => {
+export const TargetsTable = ({ setSelectedTarget, selectedTarget }: PropsTargets) => {
+  // DA IMPLEMENTARE: gestione dello stato per la selezione del target
+  const handleSelect = (target: Target) => {
+    // toggle: deseleziona se già selezionato
+    setSelectedTarget(selectedTarget?.id === target.id ? null : target);
+  };
   return (
     <Card>
       <CardContent className="p-0">
@@ -80,16 +86,18 @@ export const TargetsTable = () => {
                   </td>
                   <td className="p-4">
                     <div className="space-y-1">
-                      <div className={`text-sm font-medium ${
-                        target.status === 'Finished' ? 'text-green-600' :
-                        target.status === 'Error' ? 'text-red-600' :
-                        'text-blue-600'
-                      }`}>
+                      <div
+                        className={`text-sm font-medium ${
+                          target.status === 'Finished'
+                            ? 'text-green-600'
+                            : target.status === 'Error'
+                            ? 'text-red-600'
+                            : 'text-blue-600'
+                        }`}
+                      >
                         Status: {target.status}
                       </div>
-                      <div className="text-sm text-gray-600">
-                        New Events: {target.newEvents}
-                      </div>
+                      <div className="text-sm text-gray-600">New Events: {target.newEvents}</div>
                     </div>
                   </td>
                   <td className="p-4">
@@ -106,23 +114,21 @@ export const TargetsTable = () => {
                       <span className="bg-gray-500 text-white px-2 py-1 rounded text-xs font-medium">
                         {target.vulnerabilities.low}
                       </span>
-                      {target.hasError && (
-                        <span className="text-red-500 ml-2">⚠️</span>
-                      )}
+                      {target.hasError && <span className="text-red-500 ml-2">⚠️</span>}
                     </div>
                   </td>
                   <td className="p-4">
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
+                      <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-green-50">
                         ▶️
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-50">
+                      <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-blue-50">
                         ⚙️
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-50">
+                      <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-blue-50">
                         👁️
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-50">
+                      <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-blue-50">
                         📊
                       </Button>
                       <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-50">

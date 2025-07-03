@@ -1,3 +1,4 @@
+import { string } from 'yup';
 import { ScanResponse } from './scan.types';
 
 export interface ProjectFormData {

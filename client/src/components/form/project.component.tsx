@@ -4,62 +4,26 @@ import { useState, useEffect } from 'react';
 import validationSchema from '@/schemas/project.schema';
 import { useToast } from '@/hooks/use-toast';
 import { ProjectFormData, ProjectResponse } from '@/types/project.types';
+import { Tab, ProjectComponentProps } from '@/types/tab.types';
 import { useFormik } from 'formik';
 import { ApiResponse } from '@/types/server_response.types';
 import api from '@/lib/axios';
-
-interface Tab {
-  name: string;
-  count: number;
-}
 
 const initialValues: ProjectFormData = {
   name: '',
   domain: '',
 };
 
-const ProjectTabs = () => {
-  const [activeProject, setActiveProject] = useState('');
-  const [tabs, setTabs] = useState<Tab[]>([]);
+const ProjectComponent = ({
+  tabs,
+  setTabs,
+  activeProject,
+  setActiveProject,
+  reloadProjects,
+  loading,
+}: ProjectComponentProps) => {
   const [isCreating, setIsCreating] = useState(false);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-
-  // Simula il caricamento dei progetti (sostituisci con la chiamata axios)
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        setLoading(true);
-
-        // Per ora uso dati mock - sostituisci con:
-        // const response = await axios.get('/project/');
-        // setTabs(response.data);
-
-        const mockTabs = [
-          { name: 'Discovery CTEM', count: 5 },
-          { name: 'Discovery TPRM', count: 3 },
-          { name: 'Neuron', count: 4 },
-          { name: 'Neuron Mobile', count: 1 },
-          { name: 'On-Demand', count: 2 },
-          { name: 'MobileSuite', count: 1 },
-          { name: 'Continuous', count: 1 },
-        ];
-
-        setTabs(mockTabs);
-
-        // Imposta il primo progetto come attivo
-        if (mockTabs.length > 0) {
-          setActiveProject(mockTabs[0].name);
-        }
-      } catch (error) {
-        console.error('Errore nel caricamento dei progetti:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProjects();
-  }, [toast]);
 
   const onSubmit = async (values: ProjectFormData) => {
     try {
@@ -67,15 +31,10 @@ const ProjectTabs = () => {
       const response = await api.post<ApiResponse<ProjectResponse>>('/project', values);
       console.log('Progetto creato:', response.data);
       const newProject = {
+        id: response.data.data.id,
         name: values.name.trim(),
         count: 0, // Inizialmente il conteggio è 0
       };
-
-      // Per ora simulo la creazione
-      // const newProject = {
-      //   name: newProjectName.trim(),
-      //   count: 0,
-      // };
 
       // Aggiungi alla lista e rendilo attivo
       setTabs((prevTabs) => [...prevTabs, newProject]);
@@ -202,4 +161,4 @@ const ProjectTabs = () => {
   );
 };
 
-export default ProjectTabs;
+export default ProjectComponent;
