@@ -7,7 +7,7 @@ export interface SignupFormData {
   confirmPassword: string;
 }
 
-// Per i dati ricevuti dal backend (es: GET /users/:id)
+// Per i dati ricevuti dal backend (es: GET /users/:id, GET /user/current)
 export interface UserResponse {
   id: number;
   email: string;

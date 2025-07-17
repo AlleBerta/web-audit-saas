@@ -128,7 +128,7 @@ export const loginUsers = async (req: Request, res: Response, next: NextFunction
 
 /**
  * @description Get user info
- * @route GET /user/:id
+ * @route GET /user/current/
  * @access private
  */
 export const getUserInfo = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -139,11 +139,18 @@ export const getUserInfo = async (req: AuthenticatedRequest, res: Response, next
       include: [Project],
     });
 
+    if (!user) throw new ApiError(constants.NOT_FOUND, 'User not found');
     sendResponse(res, {
       statusCode: constants.OK,
       success: true,
       message: 'Operazione completata con successo',
-      data: user,
+      data: {
+        id: user?.id,
+        email: user?.email,
+        name: user?.name,
+        surname: user?.surname,
+        role: user?.role,
+      },
     });
   } catch (err) {
     next(err);

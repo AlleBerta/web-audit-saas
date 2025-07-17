@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import api from '@/lib/axios';
 import { ApiResponse } from '@/types/server_response.types';
 import { SITE_NAME } from '../../config/conts';
+import { useAuth } from '@/components/auth/AuthContext';
 
 const initialValues: LoginFormData = {
   email: '',
@@ -16,24 +17,27 @@ const initialValues: LoginFormData = {
 };
 
 const LoginComponent = () => {
+  const { fetchUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  console.log('Sei entrato nel login');
   const onSubmit = async (values: LoginFormData) => {
     // Handle form submission logic here
     // like making an API call or updating the store
     try {
       // Aggiungo anche il campo 'tipo="user"' come default
       const response = await api.post<ApiResponse<UserResponse>>('/user/login', values);
-
       if (response.data.success) {
+        // Aggiorna lo stato globale
+        await fetchUser();
+
         toast({
           title: 'Login Successful',
           description: `Welcome back to ${SITE_NAME}`,
         });
         navigate('/');
       }
-      console.log(response.data);
     } catch (error: any) {
       console.log(error);
       if (error.response) {

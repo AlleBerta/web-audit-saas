@@ -1,4 +1,3 @@
-// Dashboard.tsx
 import { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { ProjectTabs } from '@/components/dashboard/ProjectTabs';
@@ -21,7 +20,7 @@ const Dashboard = () => {
       const projects = response.data.data;
       console.table(projects);
       if (projects.length > 0) {
-        setActiveProject(projects[0].name);
+        setActiveProject(projects[0].name); // Imposta il primo attivo
       }
       const projectsTabs = projects.map((project) => ({
         id: project.id,
@@ -39,28 +38,6 @@ const Dashboard = () => {
   useEffect(() => {
     fetchProjects();
   }, []);
-
-  const reloadProjects = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get<ApiResponse<ProjectResponse[]>>('/project');
-      const projects = res.data.data;
-      console.table(projects);
-      if (projects.length > 0) {
-        setActiveProject(projects[0].name); // Imposta il primo attivo
-      }
-      const projectsTabs = projects.map((project) => ({
-        id: project.id,
-        name: project.name,
-        count: project.scans ? project.scans.length : 0, // Assuming scans is an array
-      }));
-      setTabs(projectsTabs);
-    } catch (error) {
-      console.error('Errore nel ricaricare i progetti:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">

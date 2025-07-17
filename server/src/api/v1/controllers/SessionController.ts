@@ -10,7 +10,6 @@ import { Session } from '../models/SessionModel';
 import { User } from '../models/UserModel';
 import { add } from 'date-fns';
 import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
-import { invalidateSessionById } from '../services/session.service';
 
 /**
  * @description Creo la sessione dell'utente
@@ -31,7 +30,7 @@ export const createSession = async (user: User, res: Response) => {
   const accessToken = generateAccessCookie(user, res);
   const refreshToken = generateRefreshToken(sessionDb.id, user.id, res);
 
-  // aggiorna il token nel db (opzionale ma utile per verificarlo in futuro)
+  // aggiorna il token nel db
   await sessionDb.update({ refreshToken });
 
   // restituisci utente loggato
@@ -95,55 +94,47 @@ export const invalidateSession = async (req: Request, res: Response, next: NextF
 };
 
 /**
- * @description Delete session
+ * @description Logout User
+ * @route PUT /user/logout
+ * @access private
  */
 export const deleteSessionHandler = async (req: AuthenticatedRequest, res: Response) => {
   if (!req.user?.id) {
     throw new ApiError(constants.UNAUTHORIZED, 'Utente non autenticato.');
   }
-  const session = invalidateSessionById(req.user.id);
-
-  // Rimuovo i cookie
-  res.cookie('accessToken', '', {
-    maxAge: 0,
-    httpOnly: true,
-  });
-
-  res.cookie('refreshToken', '', {
-    maxAge: 0,
-    httpOnly: true,
-  });
 
   try {
     const { refreshToken } = req.cookies;
-
-    if (!refreshToken) throw new ApiError(constants.BAD_REQUEST, 'refresh Token non ricevuto.');
-
-    const session = await Session.findOne({ where: { refreshToken } });
-    if (!session) throw new ApiError(constants.BAD_REQUEST, 'Token non valido.');
-
-    // invalido l'access token
-    const [updateSession] = await Session.update(
-      {
-        expiresAt: new Date(0),
-      },
-      {
-        where: { refreshToken: refreshToken },
-      }
-    );
-    if (updateSession === 0) {
-      throw new ApiError(constants.NOT_FOUND, 'Token non trovato o nessuna modifica necessaria');
+    if (!refreshToken) {
+      throw new ApiError(constants.BAD_REQUEST, 'refresh Token non ricevuto.');
     }
 
-    sendResponse(res, {
+    const session = await Session.findOne({ where: { refreshToken } });
+    if (!session) {
+      throw new ApiError(constants.BAD_REQUEST, 'Token non valido.');
+    }
+
+    // Elimino il refreshtoken dal db
+    const [updatedCount] = await Session.update(
+      { expiresAt: new Date(0) },
+      { where: { refreshToken } }
+    );
+
+    if (updatedCount === 0) {
+      throw new ApiError(constants.NOT_FOUND, 'Token non trovato o già invalidato.');
+    }
+
+    // Rimuovo i cookie solo alla fine
+    res.cookie('accessToken', '', { maxAge: 0, httpOnly: true });
+    res.cookie('refreshToken', '', { maxAge: 0, httpOnly: true });
+
+    return sendResponse(res, {
       statusCode: constants.OK,
       success: true,
-      message: 'Token eliminato con successo',
+      message: 'Logout effettuato con successo.',
       data: { expiresAt: session.expiresAt },
     });
   } catch (err) {
-    throw new ApiError(constants.SERVER_ERROR, 'errore interno del server');
+    throw new ApiError(constants.SERVER_ERROR, 'Errore interno del server.');
   }
-
-  return res.send(session);
 };

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { RequestHandler, Router } from 'express';
 import {
   getUsers,
   registerUser,
@@ -9,6 +9,7 @@ import {
   getUserInfo,
 } from '../controllers/UserController';
 import deserializeUser from '../middlewares/deserializeUser';
+import { deleteSessionHandler } from '../controllers/SessionController';
 
 const router = Router();
 
@@ -18,9 +19,10 @@ router.post('/login', loginUsers);
 // Routes protette
 // Tutte le route dopo questa riga avranno accesso a req.user
 router.use(deserializeUser);
-router.get('/current/:id', getUserInfo);
+router.get('/current/', getUserInfo);
 router.put('/modifyInfo/', modifyUserInfo);
 router.put('/modifypsw/', modifyUserPsw);
+router.put('/logout', deleteSessionHandler as unknown as RequestHandler);
 router.delete('/', deleteUser);
 
 export default router;
