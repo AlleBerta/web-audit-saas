@@ -10,7 +10,6 @@ export interface ProjectResponse {
   id: number;
   userId: number;
   name: string;
-  domain: string;
   createdAt: Date;
   updatedAt: Date;
   scans?: ScanResponse[];

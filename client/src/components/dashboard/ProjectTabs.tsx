@@ -4,13 +4,13 @@ import { Tab, ProjectTabsProps } from '@/types/tab.types';
 export const ProjectTabs = ({
   tabs,
   activeProject,
-  setActiveProject,
+  onChangeProject,
   setTabs,
   reloadProjects,
   loading,
 }: ProjectTabsProps) => {
   // Get id active project from tabs
-  const activeTab = tabs.find((tab) => tab.name === activeProject);
+  const activeTab = tabs.find((tab) => tab.name === activeProject?.name);
   if (!activeTab) {
     console.error('Active project not found in tabs');
     return null; // or handle the error as needed
@@ -23,7 +23,7 @@ export const ProjectTabs = ({
         tabs={tabs}
         setTabs={setTabs}
         activeProject={activeProject}
-        setActiveProject={setActiveProject}
+        onChangeProject={onChangeProject}
         reloadProjects={reloadProjects}
         loading={loading}
       />
@@ -32,7 +32,7 @@ export const ProjectTabs = ({
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center space-x-4">
             <span className="text-gray-600">
-              Neuron: <span className="font-medium">Project #{activeProjectId}</span>
+              Project: <span className="font-medium"> #{activeProjectId}</span>
             </span>
           </div>
           <div className="flex items-center space-x-4 text-gray-600">

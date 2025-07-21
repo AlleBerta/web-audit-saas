@@ -1,30 +1,400 @@
-import { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SoftwareCompositionChart } from './SoftwareCompositionChart';
 import { VulnerabilitiesList } from './VulnerabilitiesList';
 import { TargetsTable } from './TargetsTable';
 import { FilterBar } from './FilterBar';
-import { Target } from '@/types/target.types';
+import { TargetView } from '@/types/target.types';
+import { ProjectDashboardProps } from '@/types/tab.types';
+import { ScanResponse } from '@/types/scan.types';
+import { BUTTON_TYPES } from '@/constants/button_types';
+import { Card, CardContent } from '../ui/card';
+import { TargetsButton } from '../ui/targetButton';
+type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
-export const DashboardContent = () => {
-  const [selectedTarget, setSelectedTarget] = useState<Target | null>(null);
+export const DashboardContent = ({ activeProjectData, loading }: ProjectDashboardProps) => {
+  const [selectedTarget, setSelectedTarget] = useState<TargetView | null>(null);
+  const [selectedButton, setSelectedButton] = useState<ButtonType>(BUTTON_TYPES.UNSELECTED); // Assegnato al valore nullo
+  const [isLoading, setIsLoading] = useState<Record<ButtonType, boolean>>({
+    new: false,
+    gdpr: false,
+    pci_dss: false,
+    test_py: false,
+    scan_now: false,
+    search: false,
+    tags: false,
+    add_target: false,
+    import_targets: false,
+    ci_cd: false,
+    unselected: false,
+  });
+
+  // Carico i dati in modo corretto
+  const targetViews: TargetView[] = useMemo(() => {
+    if (!activeProjectData) return [];
+
+    const grouped: Record<string, ScanResponse[]> = {};
+
+    if (!activeProjectData?.scans) return [];
+
+    for (const scan of activeProjectData.scans) {
+      const target = scan.domain;
+      if (!grouped[target]) grouped[target] = [];
+      grouped[target].push(scan);
+    }
+
+    return Object.entries(grouped).map(([target, scans]) => {
+      // Calcolo vulnerabilità aggregate
+      const allResults = scans.flatMap((s) => s.scanResults ?? []);
+      const vulnerabilities = {
+        critical: allResults.filter((r) => r.severity === 'Critical').length,
+        high: allResults.filter((r) => r.severity === 'High').length,
+        medium: allResults.filter((r) => r.severity === 'Medium').length,
+        low: allResults.filter((r) => r.severity === 'Low').length,
+      };
+
+      // Calcolo status: se anche uno è in progress → In Progress; se uno è failed → Error; altrimenti → Finished
+      const hasRunning = scans.some((s) => s.state === 'running' || s.state === 'pending');
+      const hasError = scans.some((s) => s.state === 'failed');
+
+      const status: TargetView['status'] = hasRunning
+        ? 'In Progress'
+        : hasError
+        ? 'Error'
+        : 'Finished';
+
+      // Calcolo lastScan (quello con data più recente)
+      const sortedByDate = [...scans].sort(
+        (a, b) => new Date(b.startTime ?? 0).getTime() - new Date(a.startTime ?? 0).getTime()
+      );
+      const lastScan = sortedByDate[0]?.startTime?.toString();
+
+      return {
+        id: scans[0].id,
+        domain: scans[0].domain,
+        ip_domain: scans[0].ip_domain,
+        status,
+        scans,
+        lastScan,
+        newEvents: 0, // da calcolare se lo prevedi
+        nextScan: '', // opzionale: calcolabile da pianificazione
+        vulnerabilities,
+        hasError,
+      };
+    });
+  }, [activeProjectData]);
+
+  // Funzione per gestire lo stato di loading per bottoni specifici
+  const setButtonLoading = (buttonType: ButtonType, loading: boolean) => {
+    setIsLoading((prev) => ({
+      ...prev,
+      [buttonType]: loading,
+    }));
+  };
+
+  // Funzione callback che viene passata a FilterBar
+  const handleButtonClick = async (buttonType: ButtonType, additionalData = null) => {
+    console.log('Button clicked:', buttonType, additionalData);
+    // Imposta loading per il bottone cliccato
+    setButtonLoading(buttonType, true);
+    setSelectedButton(buttonType);
+
+    try {
+      // Qui puoi aggiungere logica aggiuntiva per ogni bottone
+      switch (buttonType) {
+        case BUTTON_TYPES.TEST_PY:
+          // Simula chiamata asincrona
+          console.log('Executing Python test...');
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          break;
+        case BUTTON_TYPES.SCAN_NOW:
+          // Simula scansione
+          console.log('Starting scan for:', additionalData);
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          break;
+        case BUTTON_TYPES.IMPORT_TARGETS:
+          // Simula import
+          console.log('Importing targets...');
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          break;
+        default:
+          // Simula operazione generica
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          break;
+      }
+    } catch (error) {
+      console.error('Error executing button action:', error);
+    } finally {
+      // Rimuovi loading
+      setButtonLoading(buttonType, false);
+    }
+  };
+
+  // Carica i filtri presenti in FilterBar
+  const renderContent = () => {
+    switch (selectedButton) {
+      case BUTTON_TYPES.NEW:
+        return (
+          <Card>
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-4 text-blue-600">📄 New Targets (10)</h3>
+              <div className="space-y-3">
+                <div className="p-3 bg-blue-50 rounded border-l-4 border-blue-500">
+                  <p className="font-medium">Target 1: example.com</p>
+                  <p className="text-sm text-gray-600">Status: Pending scan</p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded border-l-4 border-blue-500">
+                  <p className="font-medium">Target 2: api.example.com</p>
+                  <p className="text-sm text-gray-600">Status: Ready for analysis</p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded border-l-4 border-blue-500">
+                  <p className="font-medium">Target 3: app.example.com</p>
+                  <p className="text-sm text-gray-600">Status: Configuration needed</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case BUTTON_TYPES.GDPR:
+        return (
+          <Card>
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-4 text-blue-600">🛡️ GDPR Compliance (12)</h3>
+              <div className="space-y-3">
+                <div className="p-3 bg-yellow-50 rounded border-l-4 border-yellow-500">
+                  <p className="font-medium">Data Processing Agreement Required</p>
+                  <p className="text-sm text-gray-600">3 targets need DPA updates</p>
+                </div>
+                <div className="p-3 bg-green-50 rounded border-l-4 border-green-500">
+                  <p className="font-medium">Cookie Policy Compliant</p>
+                  <p className="text-sm text-gray-600">9 targets fully compliant</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case BUTTON_TYPES.PCI_DSS:
+        return (
+          <Card>
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-4 text-blue-600">
+                🏛️ PCI DSS Compliance (23)
+              </h3>
+              <div className="space-y-3">
+                <div className="p-3 bg-red-50 rounded border-l-4 border-red-500">
+                  <p className="font-medium">SSL Certificate Issues</p>
+                  <p className="text-sm text-gray-600">5 targets need SSL updates</p>
+                </div>
+                <div className="p-3 bg-green-50 rounded border-l-4 border-green-500">
+                  <p className="font-medium">Encryption Standards Met</p>
+                  <p className="text-sm text-gray-600">18 targets compliant</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case BUTTON_TYPES.TEST_PY:
+        return (
+          <Card>
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-4 text-green-600">Test Python Results</h3>
+              <div className="p-4 bg-gray-100 rounded font-mono text-sm">
+                <p className="text-green-600">✓ Connection successful</p>
+                <p className="text-blue-600">→ Running Python tests...</p>
+                <p className="text-green-600">✓ All tests passed</p>
+                <p className="text-gray-600">Execution time: 1.23s</p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case BUTTON_TYPES.SCAN_NOW:
+        return (
+          <Card>
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-4 text-green-600">Scan in Progress</h3>
+              <div className="space-y-3">
+                <div className="p-3 bg-blue-50 rounded">
+                  <p className="font-medium">Target: {targetViews?.[0]?.domain ?? 'Unknown'}</p>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div className="bg-blue-600 h-2 rounded-full w-3/4 animate-pulse"></div>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Progress: 75% - Analyzing vulnerabilities...
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case BUTTON_TYPES.SEARCH:
+        return (
+          <Card>
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-4 text-blue-600">🔍 Search and Filters</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Search targets..."
+                  className="w-full p-2 border border-gray-300 rounded"
+                />
+                <div className="flex gap-2 flex-wrap">
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                    Active
+                  </span>
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                    Pending
+                  </span>
+                  <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                    Completed
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case BUTTON_TYPES.TAGS:
+        return (
+          <Card>
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-4 text-blue-600">🏷️ Tags Management</h3>
+              <div className="space-y-3">
+                <div className="flex gap-2 flex-wrap">
+                  <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+                    Production
+                  </span>
+                  <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
+                    Staging
+                  </span>
+                  <span className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-sm">
+                    Development
+                  </span>
+                  <span className="px-3 py-1 bg-pink-100 text-pink-800 rounded-full text-sm">
+                    Critical
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case BUTTON_TYPES.ADD_TARGET:
+        return (
+          <Card>
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-4 text-green-600">➕ Add New Target</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Target URL or IP..."
+                  className="w-full p-2 border border-gray-300 rounded"
+                />
+                <textarea
+                  placeholder="Description (optional)..."
+                  className="w-full p-2 border border-gray-300 rounded h-20"
+                />
+                <TargetsButton className="bg-green-600 text-white hover:bg-green-700">
+                  Add Target
+                </TargetsButton>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case BUTTON_TYPES.IMPORT_TARGETS:
+        return (
+          <Card>
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-4 text-blue-600">📥 Import Targets</h3>
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                  <p className="text-gray-500">Drop your CSV file here or click to browse</p>
+                </div>
+                <p className="text-sm text-gray-600">Supported formats: CSV, JSON, XML</p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case BUTTON_TYPES.CI_CD:
+        return (
+          <Card>
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-4 text-blue-600">🔗 CI/CD Integrations</h3>
+              <div className="space-y-3">
+                <div className="p-3 bg-gray-50 rounded flex items-center justify-between">
+                  <span>GitHub Actions</span>
+                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">
+                    Active
+                  </span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded flex items-center justify-between">
+                  <span>Jenkins</span>
+                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm">
+                    Pending
+                  </span>
+                </div>
+                <div className="p-3 bg-gray-50 rounded flex items-center justify-between">
+                  <span>GitLab CI</span>
+                  <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-sm">
+                    Not configured
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      default:
+        return (
+          <Card>
+            <CardContent className="text-center text-gray-500">
+              Select a target to view software composition analysis.
+            </CardContent>
+          </Card>
+        );
+    }
+  };
+
+  console.log('selectedTarget in DashboardContent: ', selectedTarget);
 
   return (
     <div className="p-6 space-y-6">
       {/* Top Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SoftwareCompositionChart selectedTarget={selectedTarget} />
-        <VulnerabilitiesList selectedTarget={selectedTarget} />
+        <SoftwareCompositionChart targetViews={targetViews} selectedTarget={selectedTarget} />
+        <VulnerabilitiesList targetViews={targetViews} selectedTarget={selectedTarget} />
       </div>
 
       {/* Filters and Actions */}
-      <FilterBar />
+      <FilterBar
+        onButtonClick={handleButtonClick}
+        selectedButton={selectedButton}
+        isLoading={isLoading}
+      />
 
       {/* Targets Table */}
       <div className="bg-white p-4 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Targets</h2>
-        <p className="text-gray-500 mb-4">Select a target to view details and vulnerabilities.</p>
+        <div className="space-y-4">
+          {selectedButton && (
+            <div className="text-sm text-gray-600 mb-2">
+              Active filter: <span className="font-semibold">{selectedButton}</span>
+            </div>
+          )}
+          {renderContent()}
+        </div>
 
-        <TargetsTable setSelectedTarget={setSelectedTarget} selectedTarget={selectedTarget} />
+        <TargetsTable
+          setSelectedTarget={setSelectedTarget}
+          onButtonClick={handleButtonClick}
+          selectedTarget={selectedTarget}
+          targetViews={targetViews}
+          selectedButton={selectedButton}
+        />
       </div>
     </div>
   );

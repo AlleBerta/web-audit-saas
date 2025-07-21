@@ -1,4 +1,3 @@
-// src/models/Scan.ts
 import {
   Table,
   Column,
@@ -14,7 +13,7 @@ import { Project } from './ProjectModel';
 import { ScanResult } from './ScanResultModel';
 import { ScanAttributes, ScanCreationAttributes } from './interfaces/scan.interface';
 
-@Table({ tableName: 'scans' })
+@Table({ tableName: 'scans' }) // alias
 export class Scan extends Model<ScanAttributes, ScanCreationAttributes> {
   @Column({
     type: DataType.INTEGER,
@@ -33,6 +32,20 @@ export class Scan extends Model<ScanAttributes, ScanCreationAttributes> {
 
   @BelongsTo(() => Project)
   project!: Project;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    field: 'domanin',
+  })
+  domain!: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+    field: 'ip_domain',
+  })
+  ip_domain!: string;
 
   @Column({
     type: DataType.ENUM('pending', 'running', 'done', 'failed'),

@@ -8,7 +8,7 @@ const data = [
   { name: 'Up2date', value: 25, color: '#22c55e' },
 ];
 
-export const SoftwareCompositionChart = ({ selectedTarget }: Props) => {
+export const SoftwareCompositionChart = ({ targetViews, selectedTarget }: Props) => {
   if (!selectedTarget) {
     return (
       <Card>

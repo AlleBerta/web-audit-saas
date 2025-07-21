@@ -18,13 +18,15 @@ const ProjectComponent = ({
   tabs,
   setTabs,
   activeProject,
-  setActiveProject,
+  onChangeProject,
   reloadProjects,
   loading,
 }: ProjectComponentProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
 
+  console.log('tabs in PROJECT COMPONENT: ', tabs);
+  console.log('tabs in PROJECT COMPONENT: ', tabs);
   const onSubmit = async (values: ProjectFormData) => {
     try {
       // Chiamata API per creare il progetto
@@ -38,7 +40,7 @@ const ProjectComponent = ({
 
       // Aggiungi alla lista e rendilo attivo
       setTabs((prevTabs) => [...prevTabs, newProject]);
-      setActiveProject(newProject.name);
+      onChangeProject(newProject);
 
       // Reset del form
       formik.resetForm();
@@ -79,11 +81,11 @@ const ProjectComponent = ({
     }
   };
 
-  const handleProjectChange = (projectName: string) => {
-    setActiveProject(projectName);
+  const handleProjectChange = (projectName: Tab) => {
+    onChangeProject(projectName);
 
     // Ricavo i dati del progetto selezionato
-    const selectedProject = tabs.find((tab) => tab.name === projectName);
+    const selectedProject = tabs.find((tab) => tab.name === projectName.name);
     if (selectedProject) {
       console.log('Progetto selezionato:', selectedProject);
       // Qui puoi fare qualcosa con il progetto selezionato, come caricare i dati specifici
@@ -146,11 +148,13 @@ const ProjectComponent = ({
         {tabs.map((tab) => (
           <Button
             key={tab.name}
-            onClick={() => handleProjectChange(tab.name)}
-            variant={activeProject === tab.name ? 'default' : 'ghost'}
+            onClick={() => handleProjectChange(tab)}
+            variant={activeProject?.name === tab.name ? 'default' : 'ghost'}
             size="sm"
             className={`${
-              activeProject === tab.name ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
+              activeProject?.name === tab.name
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700'
             } hover:opacity-80 transition-opacity`}
           >
             {tab.name} {tab.count}

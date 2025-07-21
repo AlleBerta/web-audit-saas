@@ -1,8 +1,10 @@
 import { Response, NextFunction } from 'express';
 import { sendResponse, ApiError, constants } from '../utils/';
+import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
 import { Project } from '../models/ProjectModel';
 import { Scan } from '../models/ScanModel';
-import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
+import { ScanResult } from '../models/ScanResultModel';
+import { col, fn } from 'sequelize';
 
 export const createProject = async (
   req: AuthenticatedRequest,
@@ -52,13 +54,16 @@ export const createProject = async (
 
 /**
  * @description Get All Project from user
- * @route GET /project/
+ * @route GET /project/tab
  * @access private
+ * @note return only id, name, count of scan
  */
-export const getProjects = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getProjectsTab = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    console.log('-----------------------------------------------------------');
-    // console.log(req);
     const userId = req.user?.id;
     console.log('userId: ' + userId);
     if (!userId) {
@@ -71,9 +76,21 @@ export const getProjects = async (req: AuthenticatedRequest, res: Response, next
 
     const projects = await Project.findAll({
       where: { userId },
-      include: [Scan], // opzionale: se vuoi anche gli scan associati
+      include: [
+        {
+          model: Scan,
+          attributes: [], // evita che Sequelize selezioni tutte le colonne di Scan
+        },
+      ],
+      attributes: {
+        exclude: ['userId', 'createdAt', 'updatedAt'],
+        include: [[fn('COUNT', col('scans.id')), 'count']],
+      },
+      group: ['Project.id'],
     });
 
+    console.log('projectTab');
+    console.log(projects);
     return sendResponse(res, {
       statusCode: constants.OK,
       success: true,
@@ -81,6 +98,49 @@ export const getProjects = async (req: AuthenticatedRequest, res: Response, next
       data: projects,
     });
   } catch (err) {
+    console.log('errorrr!!! ', err);
+    next(err);
+  }
+};
+
+/**
+ * @description Get All info from one single user Project
+ * @route GET /project/:id
+ * @access private
+ */
+export const getProjects = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    console.log('-----------------------------------------------------------');
+    // console.log(req);
+    const userId = req.user?.id;
+    const projectId = req.params.id;
+    console.log('userId: ' + userId);
+    if (!userId) {
+      return sendResponse(res, {
+        statusCode: constants.UNAUTHORIZED,
+        success: false,
+        message: 'Utente non autenticato.',
+      });
+    }
+    const projects = await Project.findByPk(projectId, {
+      include: [
+        {
+          model: Scan,
+          include: [ScanResult], // <--- include annidato
+        },
+      ],
+    });
+
+    console.log('single project');
+    console.log(projects);
+    return sendResponse(res, {
+      statusCode: constants.OK,
+      success: true,
+      message: 'Progetto trovato con successo.',
+      data: projects,
+    });
+  } catch (err) {
+    console.log('errorrr!!! ', err);
     next(err);
   }
 };

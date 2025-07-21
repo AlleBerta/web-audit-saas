@@ -1,4 +1,3 @@
-// src/api/v1/models/ScanResult.ts
 import {
   Table,
   Column,

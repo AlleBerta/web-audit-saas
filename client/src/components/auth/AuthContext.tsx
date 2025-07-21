@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const res = await api.get<ApiResponse<UserResponse>>('/user/current/', {
         withCredentials: true,
       });
-      console.log('res: ', res.data.data);
+
       setAuthUserState((prev) => ({
         ...prev,
         user: {
@@ -77,7 +77,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    console.log('sono entrato nello useEffect');
     fetchUser();
   }, []);
 
