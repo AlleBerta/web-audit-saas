@@ -81,6 +81,7 @@ export const TargetsTable = ({
   // Action handlers
   const handleStartScan = (e: React.MouseEvent, buttonType: ButtonType, target: TargetView) => {
     e.stopPropagation();
+    setSelectedTarget(target);
     onButtonClick(buttonType); // Attivo la tendina che mostra il caricamento
     startAndPoll(`http://${target.domain}`);
   };

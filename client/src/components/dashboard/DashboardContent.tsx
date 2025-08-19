@@ -12,6 +12,7 @@ import { TargetsButton } from '../ui/targetButton';
 import api from '@/lib/axios';
 import { ApiResponse } from '@/types/server_response.types';
 import { toast } from '@/hooks/use-toast';
+import { X } from 'lucide-react';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
 export const DashboardContent = ({
@@ -317,16 +318,37 @@ export const DashboardContent = ({
         return (
           <Card>
             <CardContent>
-              <h3 className="text-lg font-semibold mb-4 text-green-600">Scan in Progress</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-green-600">Scan in Progress</h3>
+                <button
+                  onClick={() => setSelectedButton(BUTTON_TYPES.UNSELECTED)}
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white"
+                  title="Close scan"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
               <div className="space-y-3">
                 <div className="p-3 bg-blue-50 rounded">
-                  <p className="font-medium">Target: {targetViews?.[0]?.domain ?? 'Unknown'}</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div className="bg-blue-600 h-2 rounded-full w-3/4 animate-pulse"></div>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Progress: 75% - Analyzing vulnerabilities...
-                  </p>
+                  {!selectedTarget ? (
+                    <p className="text-gray-500">Select a target to view scan progress.</p>
+                  ) : (
+                    <>
+                      <p className="text-gray-600">
+                        Scanning {selectedTarget.domain} ({selectedTarget.ip_domain ?? 'IP not set'}
+                        )
+                      </p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        {/* progress bar, w-3/4 indica la dimensione della barra */}
+                        <div className="bg-blue-600 h-2 rounded-full w-3/4 animate-pulse"></div>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Progress: 75% - Analyzing vulnerabilities...
+                      </p>
+                      <p className="text-sm text-gray-600">Estimated time remaining: 5 minutes</p>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -337,7 +359,17 @@ export const DashboardContent = ({
         return (
           <Card>
             <CardContent>
-              <h3 className="text-lg font-semibold mb-4 text-blue-600">🔍 Search and Filters</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold mb-4 text-blue-600">🔍 Search and Filters</h3>
+                <button
+                  onClick={() => setSelectedButton(BUTTON_TYPES.UNSELECTED)}
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white"
+                  title="Close scan"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
               <div className="space-y-4">
                 <input
                   type="text"
@@ -364,7 +396,16 @@ export const DashboardContent = ({
         return (
           <Card>
             <CardContent>
-              <h3 className="text-lg font-semibold mb-4 text-blue-600">🏷️ Tags Management</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold mb-4 text-blue-600">🏷️ Tags Management</h3>
+                <button
+                  onClick={() => setSelectedButton(BUTTON_TYPES.UNSELECTED)}
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white"
+                  title="Close scan"
+                >
+                  <X size={16} />
+                </button>
+              </div>
               <div className="space-y-3">
                 <div className="flex gap-2 flex-wrap">
                   <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
@@ -389,7 +430,19 @@ export const DashboardContent = ({
         return (
           <Card>
             <CardContent>
-              <h3 className="text-lg font-semibold mb-4 text-green-600">➕ Add New Target</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold mb-4 text-green-600">➕ Add New Target</h3>
+                <button
+                  onClick={() => {
+                    setNewTargetUrl('');
+                    setSelectedButton(BUTTON_TYPES.UNSELECTED);
+                  }}
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white"
+                  title="Close scan"
+                >
+                  <X size={16} />
+                </button>
+              </div>
 
               <form onSubmit={handleAddTarget} className="space-y-4">
                 <input
@@ -416,7 +469,16 @@ export const DashboardContent = ({
         return (
           <Card>
             <CardContent>
-              <h3 className="text-lg font-semibold mb-4 text-blue-600">📥 Import Targets</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold mb-4 text-blue-600">📥 Import Targets</h3>
+                <button
+                  onClick={() => setSelectedButton(BUTTON_TYPES.UNSELECTED)}
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white"
+                  title="Close scan"
+                >
+                  <X size={16} />
+                </button>
+              </div>
               <div className="space-y-4">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <p className="text-gray-500">Drop your CSV file here or click to browse</p>
@@ -431,7 +493,16 @@ export const DashboardContent = ({
         return (
           <Card>
             <CardContent>
-              <h3 className="text-lg font-semibold mb-4 text-blue-600">🔗 CI/CD Integrations</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold mb-4 text-blue-600">🔗 CI/CD Integrations</h3>
+                <button
+                  onClick={() => setSelectedButton(BUTTON_TYPES.UNSELECTED)}
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white"
+                  title="Close scan"
+                >
+                  <X size={16} />
+                </button>
+              </div>
               <div className="space-y-3">
                 <div className="p-3 bg-gray-50 rounded flex items-center justify-between">
                   <span>GitHub Actions</span>
@@ -486,14 +557,7 @@ export const DashboardContent = ({
 
       {/* Targets Table */}
       <div className="bg-white p-4 rounded-lg shadow">
-        <div className="space-y-4">
-          {selectedButton && (
-            <div className="text-sm text-gray-600 mb-2">
-              Active filter: <span className="font-semibold">{selectedButton}</span>
-            </div>
-          )}
-          {renderContent()}
-        </div>
+        <div className="space-y-4">{renderContent()}</div>
 
         <TargetsTable
           setSelectedTarget={setSelectedTarget}
