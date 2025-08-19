@@ -102,7 +102,11 @@ const Dashboard = () => {
         reloadProjects={fetchProjects}
         loading={loadingTabs}
       />
-      <DashboardContent activeProjectData={activeProjectData} loading={loadingProject} />
+      <DashboardContent
+        activeProjectData={activeProjectData}
+        setActiveProjectData={setActiveProjectData}
+        loading={loadingProject}
+      />
     </div>
   );
 };

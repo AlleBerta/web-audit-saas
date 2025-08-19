@@ -1,5 +1,5 @@
 import { string } from 'yup';
-import { ScanResponse } from './scan.types';
+import { TargetResponse } from './target.types';
 
 export interface ProjectFormData {
   name: string;
@@ -12,5 +12,5 @@ export interface ProjectResponse {
   name: string;
   createdAt: Date;
   updatedAt: Date;
-  scans?: ScanResponse[];
+  scans?: TargetResponse[];
 }

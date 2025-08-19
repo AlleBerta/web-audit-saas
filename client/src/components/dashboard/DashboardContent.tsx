@@ -3,15 +3,22 @@ import { SoftwareCompositionChart } from './SoftwareCompositionChart';
 import { VulnerabilitiesList } from './VulnerabilitiesList';
 import { TargetsTable } from './TargetsTable';
 import { FilterBar } from './FilterBar';
-import { TargetView } from '@/types/target.types';
+import { Target, TargetView } from '@/types/target.types';
 import { ProjectDashboardProps } from '@/types/tab.types';
-import { ScanResponse } from '@/types/scan.types';
+import { TargetResponse } from '@/types/target.types';
 import { BUTTON_TYPES } from '@/constants/button_types';
 import { Card, CardContent } from '../ui/card';
 import { TargetsButton } from '../ui/targetButton';
+import api from '@/lib/axios';
+import { ApiResponse } from '@/types/server_response.types';
+import { toast } from '@/hooks/use-toast';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
-export const DashboardContent = ({ activeProjectData, loading }: ProjectDashboardProps) => {
+export const DashboardContent = ({
+  activeProjectData,
+  setActiveProjectData,
+  loading,
+}: ProjectDashboardProps) => {
   const [selectedTarget, setSelectedTarget] = useState<TargetView | null>(null);
   const [selectedButton, setSelectedButton] = useState<ButtonType>(BUTTON_TYPES.UNSELECTED); // Assegnato al valore nullo
   const [isLoading, setIsLoading] = useState<Record<ButtonType, boolean>>({
@@ -27,12 +34,13 @@ export const DashboardContent = ({ activeProjectData, loading }: ProjectDashboar
     ci_cd: false,
     unselected: false,
   });
+  const [newTargetUrl, setNewTargetUrl] = useState('');
 
   // Carico i dati in modo corretto
   const targetViews: TargetView[] = useMemo(() => {
     if (!activeProjectData) return [];
 
-    const grouped: Record<string, ScanResponse[]> = {};
+    const grouped: Record<string, TargetResponse[]> = {};
 
     if (!activeProjectData?.scans) return [];
 
@@ -126,6 +134,101 @@ export const DashboardContent = ({ activeProjectData, loading }: ProjectDashboar
     } finally {
       // Rimuovi loading
       setButtonLoading(buttonType, false);
+    }
+  };
+
+  /**
+   * Rimuove http:// o https:// e slash finali, restituisce solo dominio/host
+   */
+  function normalizeTargetUrl(input: string): string {
+    try {
+      // se manca lo schema, lo aggiungo fittiziamente per farlo parsare da URL
+      const url =
+        input.startsWith('http://') || input.startsWith('https://')
+          ? new URL(input)
+          : new URL('http://' + input);
+
+      // ritorno solo l'hostname (senza schema, senza slash)
+      return url.hostname;
+    } catch {
+      // se input non è un URL valido → restituisco stringa originale "ripulita"
+      return input.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    }
+  }
+
+  // Funzione per gestire l'aggiunta di un nuovo target
+  const handleAddTarget = async (e: React.FormEvent) => {
+    e.preventDefault(); // impedisce il refresh della pagina
+    if (!newTargetUrl.trim()) return; // semplice validazione
+
+    const normalizedUrl = normalizeTargetUrl(newTargetUrl);
+    if (!normalizedUrl) {
+      toast({
+        title: 'Invalid URL',
+        description: 'Please enter a valid URL or IP address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setButtonLoading(BUTTON_TYPES.ADD_TARGET, true);
+
+      // chiamata API al server
+      const res = await api.post<ApiResponse<TargetResponse>>(
+        '/scan',
+        { domain: normalizedUrl, projectId: activeProjectData?.id },
+        { withCredentials: true }
+      );
+
+      const newTarget = res.data.data;
+
+      setNewTargetUrl(''); // reset input
+      setSelectedButton(BUTTON_TYPES.UNSELECTED); //chiudi la card AddTarget
+
+      // aggiorno manualmente activeProjectData
+      setActiveProjectData((prev) =>
+        prev
+          ? {
+              ...prev,
+              scans: [...(prev.scans ?? []), newTarget], // ✅ aggiungo il nuovo target/scan all’array
+            }
+          : prev
+      );
+
+      // seleziona direttamente il nuovo target come TargetView
+      setSelectedTarget({
+        id: newTarget.id,
+        domain: newTarget.domain,
+        ip_domain: newTarget.ip_domain,
+        status: 'In Progress', // o da newTarget.state se ce l’hai
+        newEvents: 0,
+        lastScan: newTarget.startTime?.toString(),
+        nextScan: '',
+        vulnerabilities: {
+          critical: 0,
+          high: 0,
+          medium: 0,
+          low: 0,
+        },
+        hasError: newTarget.state === 'failed',
+      });
+
+      toast({
+        title: 'Target added successfully',
+        description: `Target ${newTarget.domain} has been added.`,
+      });
+      // eventuale refresh lista target
+      //await fetchTargets();
+    } catch (error) {
+      toast({
+        title: 'Error adding target',
+        description: 'There was an error while adding the target. Please try again.',
+        variant: 'destructive',
+      });
+      console.error("Errore nell'aggiunta del target:", error);
+    } finally {
+      setButtonLoading(BUTTON_TYPES.ADD_TARGET, false);
     }
   };
 
@@ -287,20 +390,24 @@ export const DashboardContent = ({ activeProjectData, loading }: ProjectDashboar
           <Card>
             <CardContent>
               <h3 className="text-lg font-semibold mb-4 text-green-600">➕ Add New Target</h3>
-              <div className="space-y-4">
+
+              <form onSubmit={handleAddTarget} className="space-y-4">
                 <input
                   type="text"
+                  value={newTargetUrl}
+                  onChange={(e) => setNewTargetUrl(e.target.value)}
                   placeholder="Target URL or IP..."
                   className="w-full p-2 border border-gray-300 rounded"
                 />
-                <textarea
-                  placeholder="Description (optional)..."
-                  className="w-full p-2 border border-gray-300 rounded h-20"
-                />
-                <TargetsButton className="bg-green-600 text-white hover:bg-green-700">
+
+                <TargetsButton
+                  type="submit"
+                  className="bg-green-600 text-white hover:bg-green-700"
+                  loading={loading}
+                >
                   Add Target
                 </TargetsButton>
-              </div>
+              </form>
             </CardContent>
           </Card>
         );

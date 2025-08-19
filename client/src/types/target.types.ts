@@ -1,5 +1,19 @@
+import { ScanResult } from './scanResult.types';
 import { BUTTON_TYPES } from '@/constants/button_types';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
+
+// Risposta dell'API per le scansioni (nel server si parla di Scan, nel client di Target)
+export interface TargetResponse {
+  id: number;
+  projectId: number;
+  domain: string;
+  ip_domain: string;
+  state: 'pending' | 'running' | 'done' | 'failed' | 'none' | 'canceled';
+  startTime?: Date;
+  endTime?: Date;
+  reportPath?: string;
+  scanResults?: ScanResult[];
+}
 
 // Utilizzata solo in TargetsTable, ma la dovrò modificare
 export interface Target {

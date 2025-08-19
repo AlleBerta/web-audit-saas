@@ -26,7 +26,7 @@ export class Scan extends Model<ScanAttributes, ScanCreationAttributes> {
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
-    field: 'project_id',
+    field: 'projectId',
   })
   projectId!: number;
 
@@ -36,7 +36,7 @@ export class Scan extends Model<ScanAttributes, ScanCreationAttributes> {
   @Column({
     type: DataType.STRING,
     allowNull: false,
-    field: 'domanin',
+    field: 'domain',
   })
   domain!: string;
 
@@ -48,10 +48,10 @@ export class Scan extends Model<ScanAttributes, ScanCreationAttributes> {
   ip_domain!: string;
 
   @Column({
-    type: DataType.ENUM('pending', 'running', 'done', 'failed'),
+    type: DataType.ENUM('pending', 'running', 'done', 'failed', 'canceled', 'none'),
     allowNull: false,
   })
-  state!: 'pending' | 'running' | 'done' | 'failed';
+  state!: 'pending' | 'running' | 'done' | 'failed' | 'canceled' | 'none';
 
   @Column({
     type: DataType.DATE,

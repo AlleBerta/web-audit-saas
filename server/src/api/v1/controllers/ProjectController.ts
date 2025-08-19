@@ -6,6 +6,11 @@ import { Scan } from '../models/ScanModel';
 import { ScanResult } from '../models/ScanResultModel';
 import { col, fn } from 'sequelize';
 
+/**
+ * @description Create one Project from user
+ * @route POST /project/
+ * @access private
+ */
 export const createProject = async (
   req: AuthenticatedRequest,
   res: Response,
@@ -84,7 +89,7 @@ export const getProjectsTab = async (
       ],
       attributes: {
         exclude: ['userId', 'createdAt', 'updatedAt'],
-        include: [[fn('COUNT', col('scans.id')), 'count']],
+        include: [[fn('COUNT', fn('DISTINCT', col('scans.domain'))), 'count']],
       },
       group: ['Project.id'],
     });

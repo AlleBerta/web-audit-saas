@@ -26,5 +26,6 @@ export interface ProjectComponentProps {
 
 export interface ProjectDashboardProps {
   activeProjectData: ProjectResponse | undefined;
+  setActiveProjectData: React.Dispatch<React.SetStateAction<ProjectResponse | undefined>>;
   loading: boolean;
 }

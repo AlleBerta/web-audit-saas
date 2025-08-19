@@ -1,7 +1,9 @@
 export interface ScanAttributes {
   id: number;
   projectId: number;
-  state: 'pending' | 'running' | 'done' | 'failed';
+  domain: string;
+  ip_domain?: string;
+  state: 'pending' | 'running' | 'done' | 'failed' | 'canceled' | 'none';
   startTime?: Date;
   endTime?: Date;
   reportPath?: string;
