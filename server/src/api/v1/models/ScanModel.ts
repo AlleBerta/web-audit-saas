@@ -1,4 +1,3 @@
-// src/models/Scan.ts
 import {
   Table,
   Column,
@@ -12,9 +11,10 @@ import {
 } from 'sequelize-typescript';
 import { Project } from './ProjectModel';
 import { ScanResult } from './ScanResultModel';
+import { ScanAttributes, ScanCreationAttributes } from './interfaces/scan.interface';
 
-@Table({ tableName: 'scans' })
-export class Scan extends Model<Scan> {
+@Table({ tableName: 'scans' }) // alias
+export class Scan extends Model<ScanAttributes, ScanCreationAttributes> {
   @Column({
     type: DataType.INTEGER,
     autoIncrement: true,
@@ -26,7 +26,7 @@ export class Scan extends Model<Scan> {
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
-    field: 'project_id',
+    field: 'projectId',
   })
   projectId!: number;
 
@@ -34,10 +34,24 @@ export class Scan extends Model<Scan> {
   project!: Project;
 
   @Column({
-    type: DataType.ENUM('pending', 'running', 'done', 'failed'),
+    type: DataType.STRING,
+    allowNull: false,
+    field: 'domain',
+  })
+  domain!: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+    field: 'ip_domain',
+  })
+  ip_domain!: string;
+
+  @Column({
+    type: DataType.ENUM('pending', 'running', 'done', 'failed', 'canceled', 'none'),
     allowNull: false,
   })
-  state!: 'pending' | 'running' | 'done' | 'failed';
+  state!: 'pending' | 'running' | 'done' | 'failed' | 'canceled' | 'none';
 
   @Column({
     type: DataType.DATE,

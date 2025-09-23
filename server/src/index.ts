@@ -1,22 +1,45 @@
-import express from 'express';
+import express, { RequestHandler } from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'body-parser';
 import config from './config/config';
 import { db } from '@api/v1/models';
 import userRoutes from '@api/v1/routes/UserRoutes';
+import projectRouter from '@api/v1/routes/ProjectRoutes';
+import scanRouter from '@api/v1/routes/ScanRoutes';
 import { errorHandler } from '@api/v1/middlewares/errorHandler';
+import deserializeUser from '@api/v1/middlewares/deserializeUser';
+import { requireUser } from '@api/v1/middlewares/requireUser';
+
+const port = Number(config.SERVER_PORT);
+const client_port = Number(config.CLIENT_PORT);
 
 const app = express();
 app.use(json());
 app.use(urlencoded({ extended: true }));
-const port = Number(config.PORT) || 3000;
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: `http://localhost:${client_port}`,
+    credentials: true,
+  })
+);
+// routes
+app.use('/user', userRoutes);
 
-// (Qui middleware, routes, ecc.)
-app.use('/users', userRoutes);
+// middlewares che gestiscono il login
+app.use(deserializeUser);
+app.use(requireUser as unknown as RequestHandler);
+
+// Routes tutte protette
+app.use('/project', projectRouter);
+app.use('/scan', scanRouter);
+// middlewares
 app.use(errorHandler); // Gestisce gli errori
 
 // Prima di avviare il server, sincronizziamo il DB
 db.sequelize
-  .sync({ alter: true }) // o { force: true } per drop+create
+  .sync() // { alter: true } per modificare, { force: true } per drop+create
   .then(() => {
     console.log('✅ Database synchronized');
     app.listen(port, () => {

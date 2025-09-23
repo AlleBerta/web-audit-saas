@@ -1,9 +1,12 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import config from '@config/config';
+import { createSession } from './SessionController';
 import { sendResponse, ApiError, constants } from '../utils/';
 import { User } from '../models/UserModel';
 import { Project } from '../models/ProjectModel';
+import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
+
 // GET
 export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -23,11 +26,15 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-// GET /:id
-export const getUser = async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * @description Get user from email
+ * @access public
+ */
+export const getUserByEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = req.params.id;
-    const user = await User.findByPk(id, {
+    const email = req.body;
+    const user = await User.findOne({
+      where: { email: email },
       attributes: { exclude: ['password'] },
       include: [Project],
     });
@@ -50,15 +57,10 @@ export const getUser = async (req: Request, res: Response, next: NextFunction) =
  */
 export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, name, surname, password, role } = req.body;
+    const { email, name, surname, password } = req.body;
 
-    if (!email || !name || !surname || !password || !role) {
+    if (!email || !name || !surname || !password) {
       throw new ApiError(constants.BAD_REQUEST, 'Tutti i campi sono obbligatori.');
-    }
-
-    const validRoles = ['admin', 'user'];
-    if (!validRoles.includes(role)) {
-      throw new ApiError(constants.BAD_REQUEST, 'Ruolo non valido.');
     }
 
     const existingUser = await User.findOne({ where: { email } });
@@ -68,12 +70,12 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
 
     const hashedPassword = await bcrypt.hash(password, Number(config.PSW_SALT));
 
+    // Per
     const newUser = await User.create({
       email,
       name,
       surname,
       password: hashedPassword,
-      role,
     });
 
     sendResponse(res, {
@@ -95,7 +97,7 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
 
 /**
  * @desc Login user
- * @route POST /users/login
+ * @route POST /user/login
  * @access Public
  */
 export const loginUsers = async (req: Request, res: Response, next: NextFunction) => {
@@ -106,17 +108,50 @@ export const loginUsers = async (req: Request, res: Response, next: NextFunction
     }
 
     const existingUser = await User.findOne({ where: { email } });
-    if (existingUser && (await bcrypt.compare(password, existingUser.password))) {
-      // Genero il token
-
-      sendResponse(res, {
-        statusCode: constants.OK,
-        success: true,
-        message: 'Utente loggato con successo',
-      });
-    } else {
+    if (!existingUser || !(await bcrypt.compare(password, existingUser.password))) {
       throw new ApiError(constants.UNAUTHORIZED, 'Email o password non valida');
     }
+
+    // Creo la sessione
+    const userPayload = await createSession(existingUser, res);
+
+    sendResponse(res, {
+      statusCode: constants.OK,
+      success: true,
+      message: 'Utente loggato con successo',
+      data: userPayload,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * @description Get user info
+ * @route GET /user/current/
+ * @access private
+ */
+export const getUserInfo = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const id = req.user?.id;
+    const user = await User.findByPk(id, {
+      attributes: { exclude: ['password'] },
+      include: [Project],
+    });
+
+    if (!user) throw new ApiError(constants.NOT_FOUND, 'User not found');
+    sendResponse(res, {
+      statusCode: constants.OK,
+      success: true,
+      message: 'Operazione completata con successo',
+      data: {
+        id: user?.id,
+        email: user?.email,
+        name: user?.name,
+        surname: user?.surname,
+        role: user?.role,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -124,7 +159,7 @@ export const loginUsers = async (req: Request, res: Response, next: NextFunction
 
 /**
  * @desc Modify user info
- * @route PUT /users/modifyInfo/
+ * @route PUT /user/modifyInfo/
  * @access Private
  */
 export const modifyUserInfo = async (req: Request, res: Response, next: NextFunction) => {
@@ -170,11 +205,18 @@ export const modifyUserInfo = async (req: Request, res: Response, next: NextFunc
  * @route PUT /users/modifyPass/
  * @access Private
  */
-export const modifyUserPsw = async (req: Request, res: Response, next: NextFunction) => {
+export const modifyUserPsw = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const { oldPsw, newPsw } = req.body;
     // Attualmente id è vuoto, crea prima l'access token, poi ricavi l'id da lì
-    const id = req.params.id;
+    if (!req.user) {
+      throw new ApiError(constants.UNAUTHORIZED, 'Utente non autenticato');
+    }
+    const id = req.user?.id;
+    const { oldPsw, newPsw } = req.body;
 
     if (!oldPsw || !newPsw) {
       throw new ApiError(constants.BAD_REQUEST, 'Tutti i campi sono obbligatori.');

@@ -11,14 +11,18 @@ import {
   CreatedAt,
   UpdatedAt,
   HasMany,
+  HasOne,
 } from 'sequelize-typescript';
+
+import { UserAttributes, UserCreationAttributes } from './interfaces/user.interface';
 
 import { CreationOptional } from 'sequelize';
 
 import { Project } from './ProjectModel';
+import { Session } from './SessionModel';
 
 @Table({ tableName: 'users', timestamps: true })
-export class User extends Model {
+export class User extends Model<UserAttributes, UserCreationAttributes> {
   @PrimaryKey
   @AutoIncrement
   @Column({ type: DataType.INTEGER })
@@ -56,4 +60,7 @@ export class User extends Model {
 
   @HasMany(() => Project, { onDelete: 'CASCADE' })
   projects?: CreationOptional<Project[]>; // projects è la proprietà per ricavare tutti i progetto collegato ad un utente
+
+  @HasOne(() => Session, { onDelete: 'CASCADE' })
+  session?: Session;
 }

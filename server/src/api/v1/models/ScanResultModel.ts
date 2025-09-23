@@ -1,4 +1,3 @@
-// src/api/v1/models/ScanResult.ts
 import {
   Table,
   Column,
@@ -9,9 +8,13 @@ import {
   BelongsTo,
 } from 'sequelize-typescript';
 import { Scan } from './ScanModel';
+import {
+  ScanResultAttributes,
+  ScanResultCreationAttributes,
+} from './interfaces/scanResult.interface';
 
 @Table({ tableName: 'scan_results' })
-export class ScanResult extends Model<ScanResult> {
+export class ScanResult extends Model<ScanResultAttributes, ScanResultCreationAttributes> {
   @Column({
     type: DataType.INTEGER,
     autoIncrement: true,

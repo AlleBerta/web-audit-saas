@@ -4,6 +4,7 @@ import { User } from './UserModel';
 import { Project } from './ProjectModel';
 import { Scan } from './ScanModel';
 import { ScanResult } from './ScanResultModel';
+import { Session } from './SessionModel';
 
 // Se non usi il pattern `models: [ ... ]` in database.ts,
 // puoi anche registrare manualmente:
@@ -15,4 +16,5 @@ export const db = {
   Project,
   Scan,
   ScanResult,
+  Session,
 };

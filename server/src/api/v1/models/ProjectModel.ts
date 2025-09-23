@@ -11,9 +11,9 @@ import {
 } from 'sequelize-typescript';
 import { User } from './UserModel';
 import { Scan } from './ScanModel';
-
+import { ProjectAttributes, ProjectCreationAttributes } from './interfaces/project.interface';
 @Table({ tableName: 'projects' })
-export class Project extends Model<Project> {
+export class Project extends Model<ProjectAttributes, ProjectCreationAttributes> {
   @Column({
     type: DataType.INTEGER,
     autoIncrement: true,
@@ -29,11 +29,11 @@ export class Project extends Model<Project> {
   })
   userId!: number;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
-  domain!: string;
+  // @Column({
+  //   type: DataType.STRING,
+  //   allowNull: false,
+  // })
+  // domain!: string;
 
   @Column({
     type: DataType.STRING,
