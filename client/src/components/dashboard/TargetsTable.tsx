@@ -4,6 +4,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { PropsTargets, TargetView } from '@/types/target.types';
 import axios from 'axios';
 import { BUTTON_TYPES } from '@/constants/button_types';
+import { API_BASE_URL } from '@/config/conts';
+import { toast } from '@/hooks/use-toast';
+import { ApiResponse } from '@/types/server_response.types';
+import { ScanResponse, ScanStatus } from '@/types/scanResult.types';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
 export const TargetsTable = ({
@@ -22,53 +26,83 @@ export const TargetsTable = ({
    */
   async function startScan(url: string): Promise<number | null> {
     try {
-      const res = await axios.post('http://192.168.179.3:5000/start-scan', { url });
-      return res.data.idScan;
-    } catch (err) {
+      const res = await axios.post<ApiResponse<ScanResponse>>(`${API_BASE_URL}/start-scan`, {
+        url,
+      });
+      toast({
+        title: res.data.message,
+        description: 'La scansione durerà qualche minuto',
+      });
+      return res.data.data.idScan;
+    } catch (err: any) {
       console.error("Errore durante l'avvio della scansione:", err);
+      toast({
+        title: err?.config?.message ?? 'Errore durante lo scanning',
+        description: err.response.data.message ?? 'Please, Retry',
+        variant: 'destructive',
+      });
       return null;
     }
   }
 
-  async function checkScanStatus(idScan: number): Promise<'processing' | 'done' | null> {
+  async function checkScanStatus(
+    idScan: number
+  ): Promise<'pending' | 'processing' | 'done' | 'error'> {
     try {
-      const res = await axios.get(`http://192.168.179.3:5000/scan-status/${idScan}`);
-      return res.data.status;
+      const res = await axios.get<ApiResponse<ScanStatus>>(
+        `http://192.168.179.3:5000/scan-status/${idScan}`
+      );
+      return res.data.data.status;
     } catch (err) {
       console.error('Errore nel recupero dello stato:', err);
-      return null;
+      return 'error';
     }
   }
 
   async function getScanResult(idScan: number): Promise<any> {
     try {
       const res = await axios.get(`http://192.168.179.3:5000/result/${idScan}`);
+      toast({
+        title: res.data.message ?? 'Bravo',
+        description: 'You can now check all data founded',
+      });
       return res.data;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Errore nel recupero del risultato:', err);
+      toast({
+        title: err.response.statusText ?? 'Internal Server Error',
+        description: 'Please, try again',
+        variant: 'destructive',
+      });
       return null;
     }
   }
 
   async function startAndPoll(url: string) {
-    console.log('url: ', url);
-    const idScan = await startScan(url);
-    if (!idScan) return;
+    try {
+      console.log('url: ', url);
+      const idScan = await startScan(url);
+      if (!idScan) return;
 
-    const interval = setInterval(async () => {
-      const status = await checkScanStatus(idScan);
-      if (status === 'done') {
-        clearInterval(interval);
-        const result = await getScanResult(idScan);
-        console.log('✅ Risultato:', result);
-        // Puoi salvarlo nello stato o mostrarlo a schermo
-      } else if (status === 'processing') {
-        console.log('⏳ In attesa della fine della scansione...');
-      } else {
-        clearInterval(interval);
-        console.error('❌ Errore nel polling');
-      }
-    }, 5000);
+      console.log('idScan: ', idScan);
+      const interval = setInterval(async () => {
+        const status = await checkScanStatus(idScan);
+        if (status === 'done') {
+          clearInterval(interval);
+          const result = await getScanResult(idScan);
+          onButtonClick('unselected'); // tolgo la tendina
+          console.log('✅ Risultato:', result);
+          // Puoi salvarlo nello stato o mostrarlo a schermo
+        } else if (status === 'processing') {
+          console.log('⏳ In attesa della fine della scansione...');
+        } else {
+          clearInterval(interval);
+          console.error('❌ Errore nel polling');
+        }
+      }, 5000);
+    } catch (err) {
+      console.error('❌ Errore nello startAndPoll:', err);
+    }
   }
 
   // Handler per cliccare sulla riga
@@ -83,7 +117,7 @@ export const TargetsTable = ({
     e.stopPropagation();
     setSelectedTarget(target);
     onButtonClick(buttonType); // Attivo la tendina che mostra il caricamento
-    startAndPoll(`http://${target.domain}`);
+    startAndPoll(`https://${target.domain}`);
   };
 
   const handleSettings = (e: React.MouseEvent, target: TargetView) => {

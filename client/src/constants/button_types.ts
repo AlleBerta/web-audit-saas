@@ -3,7 +3,6 @@ export const BUTTON_TYPES = {
   NEW: 'new',
   GDPR: 'gdpr',
   PCI_DSS: 'pci_dss',
-  TEST_PY: 'test_py',
   SCAN_NOW: 'scan_now',
   SEARCH: 'search',
   TAGS: 'tags',

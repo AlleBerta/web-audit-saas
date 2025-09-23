@@ -1,4 +1,3 @@
-import { string } from 'yup';
 import { TargetResponse } from './target.types';
 
 export interface ProjectFormData {

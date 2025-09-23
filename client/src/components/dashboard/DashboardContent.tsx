@@ -26,7 +26,6 @@ export const DashboardContent = ({
     new: false,
     gdpr: false,
     pci_dss: false,
-    test_py: false,
     scan_now: false,
     search: false,
     tags: false,
@@ -110,23 +109,16 @@ export const DashboardContent = ({
     try {
       // Qui puoi aggiungere logica aggiuntiva per ogni bottone
       switch (buttonType) {
-        case BUTTON_TYPES.TEST_PY:
-          // Simula chiamata asincrona
-          console.log('Executing Python test...');
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          break;
         case BUTTON_TYPES.SCAN_NOW:
-          // Simula scansione
           console.log('Starting scan for:', additionalData);
           await new Promise((resolve) => setTimeout(resolve, 3000));
           break;
         case BUTTON_TYPES.IMPORT_TARGETS:
-          // Simula import
           console.log('Importing targets...');
           await new Promise((resolve) => setTimeout(resolve, 1500));
           break;
         default:
-          // Simula operazione generica
+          // Operazione generica
           await new Promise((resolve) => setTimeout(resolve, 1000));
           break;
       }
@@ -294,21 +286,6 @@ export const DashboardContent = ({
                   <p className="font-medium">Encryption Standards Met</p>
                   <p className="text-sm text-gray-600">18 targets compliant</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
-
-      case BUTTON_TYPES.TEST_PY:
-        return (
-          <Card>
-            <CardContent>
-              <h3 className="text-lg font-semibold mb-4 text-green-600">Test Python Results</h3>
-              <div className="p-4 bg-gray-100 rounded font-mono text-sm">
-                <p className="text-green-600">✓ Connection successful</p>
-                <p className="text-blue-600">→ Running Python tests...</p>
-                <p className="text-green-600">✓ All tests passed</p>
-                <p className="text-gray-600">Execution time: 1.23s</p>
               </div>
             </CardContent>
           </Card>

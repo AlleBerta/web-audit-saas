@@ -166,20 +166,6 @@ export const FilterBar = ({ onButtonClick, selectedButton, isLoading }: PropsFil
         <div className="flex-1 lg:flex-initial">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0">
             <div className="flex items-center gap-2 min-w-max">
-              {/* <TargetsButton
-                variant="success"
-                className={`whitespace-nowrap ${
-                  activeButton === BUTTON_TYPES.TEST_PY
-                    ? 'bg-green-700 hover:bg-green-800' 
-                    : ''
-                }`}
-                leftIcon="🧪"
-                loading={isLoading[BUTTON_TYPES.TEST_PY]}
-                onClick={() => handleButtonClick(BUTTON_TYPES.TEST_PY)}
-              >
-                Test py
-              </TargetsButton> */}
-
               <TargetsButton
                 variant="success"
                 className={`whitespace-nowrap ${
