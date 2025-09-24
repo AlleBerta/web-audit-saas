@@ -20,7 +20,7 @@ export class Session extends Model<SessionAttributes, SessionCreationAttributes>
   @Column({ type: DataType.INTEGER, allowNull: false })
   id!: number;
 
-  @Column({ type: DataType.STRING, allowNull: false })
+  @Column({ type: DataType.STRING(512), allowNull: false })
   refreshToken!: string;
 
   @Column({ type: DataType.BOOLEAN, allowNull: false })

@@ -1,10 +1,11 @@
 import { Response, NextFunction } from 'express';
 import { sendResponse, ApiError, constants } from '../utils/';
 import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
+import { col, fn } from 'sequelize';
 import { Project } from '../models/ProjectModel';
 import { Scan } from '../models/ScanModel';
 import { ScanResult } from '../models/ScanResultModel';
-import { col, fn } from 'sequelize';
+import { Target } from '../models/TargetModel';
 
 /**
  * @description Create one Project from user
@@ -61,7 +62,7 @@ export const createProject = async (
  * @description Get All Project from user
  * @route GET /project/tab
  * @access private
- * @note return only id, name, count of scan
+ * @note return only id, name, count of target
  */
 export const getProjectsTab = async (
   req: AuthenticatedRequest,
@@ -70,26 +71,18 @@ export const getProjectsTab = async (
 ) => {
   try {
     const userId = req.user?.id;
-    console.log('userId: ' + userId);
-    if (!userId) {
-      return sendResponse(res, {
-        statusCode: constants.UNAUTHORIZED,
-        success: false,
-        message: 'Utente non autenticato.',
-      });
-    }
 
     const projects = await Project.findAll({
       where: { userId },
       include: [
         {
-          model: Scan,
+          model: Target,
           attributes: [], // evita che Sequelize selezioni tutte le colonne di Scan
         },
       ],
       attributes: {
         exclude: ['userId', 'createdAt', 'updatedAt'],
-        include: [[fn('COUNT', fn('DISTINCT', col('scans.domain'))), 'count']],
+        include: [[fn('COUNT', fn('DISTINCT', col('targets.domain'))), 'count']],
       },
       group: ['Project.id'],
     });
@@ -127,22 +120,96 @@ export const getProjects = async (req: AuthenticatedRequest, res: Response, next
         message: 'Utente non autenticato.',
       });
     }
-    const projects = await Project.findByPk(projectId, {
+
+    // Mostra tutti i risultati di tutte le scansioni per ogni target
+    // const project = await Project.findByPk(projectId, {
+    //   attributes: ['id', 'name', 'userId'],
+    //   include: [
+    //     {
+    //       model: Target,
+    //       as: 'targets',
+    //       attributes: ['id', 'projectId', 'domain', 'ip_domain'],
+    //       include: [
+    //         {
+    //           model: Scan,
+    //           as: 'scans',
+    //           attributes: ['id', 'state', 'start_time', 'end_time'],
+    //           include: [
+    //             {
+    //               model: ScanResult,
+    //               as: 'scanResults',
+    //               attributes: ['id', 'scanId', 'vulnerabilityType', 'severity', 'description'],
+    //             },
+    //           ],
+    //         },
+    //       ],
+    //     },
+    //   ],
+    //   order: [
+    //     ['id', 'ASC'], // project.id asc
+    //     [{ model: Target, as: 'targets' }, 'id', 'ASC'], // target.id asc
+    //     [{ model: Target, as: 'targets' }, { model: Scan, as: 'scans' }, 'id', 'ASC'], // scan.id asc
+    //     [
+    //       { model: Target, as: 'targets' },
+    //       { model: Scan, as: 'scans' },
+    //       { model: ScanResult, as: 'scanResults' },
+    //       'id',
+    //       'DESC',
+    //     ], // scanResult.id desc
+    //   ],
+    // });
+
+    // mostra tutti i risultati dell'ultima scansione per ogni target
+    const project = await Project.findByPk(projectId, {
+      attributes: ['id', 'name', 'userId'],
       include: [
         {
-          model: Scan,
-          include: [ScanResult], // <--- include annidato
+          model: Target,
+          as: 'targets',
+          attributes: ['id', 'projectId', 'domain', 'ip_domain'],
+          include: [
+            {
+              model: Scan,
+              as: 'scans',
+              separate: true, // necessario per far funzionare limit
+              limit: 1, // solo l’ultimo
+              order: [['id', 'DESC']], // per definire “ultimo”
+              attributes: ['id', 'state', 'start_time', 'end_time'],
+              include: [
+                {
+                  model: ScanResult,
+                  as: 'scanResults',
+                  attributes: ['id', 'scanId', 'vulnerabilityType', 'severity', 'description'],
+                  order: [['id', 'DESC']],
+                },
+              ],
+            },
+          ],
         },
+      ],
+      order: [
+        ['id', 'ASC'], // project.id asc
+        [{ model: Target, as: 'targets' }, 'id', 'ASC'], // target.id asc
       ],
     });
 
+    // const response = project?.toJSON() as any;
+    // // Trasforma scans[] in lastScan
+    // if (response?.targets) {
+    //   response.targets = response.targets.map((target: any) => ({
+    //     ...target,
+    //     lastScan: target.scans?.[0] || null, // prendi solo l'ultimo
+    //     scans: undefined, // rimuovi scans se non serve
+    //   }));
+    // }
+
     console.log('single project');
-    console.log(projects);
+    console.log(project);
     return sendResponse(res, {
       statusCode: constants.OK,
       success: true,
       message: 'Progetto trovato con successo.',
-      data: projects,
+      data: project,
     });
   } catch (err) {
     console.log('errorrr!!! ', err);

@@ -1,10 +1,11 @@
 // src/models/index.ts
 import { sequelize } from '@config/database';
 import { User } from './UserModel';
+import { Session } from './SessionModel';
 import { Project } from './ProjectModel';
+import { Target } from './TargetModel';
 import { Scan } from './ScanModel';
 import { ScanResult } from './ScanResultModel';
-import { Session } from './SessionModel';
 
 // Se non usi il pattern `models: [ ... ]` in database.ts,
 // puoi anche registrare manualmente:
@@ -13,8 +14,9 @@ import { Session } from './SessionModel';
 export const db = {
   sequelize,
   User,
+  Session,
   Project,
+  Target,
   Scan,
   ScanResult,
-  Session,
 };

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import validationSchema from '@/schemas/project.schema';
 import { useToast } from '@/hooks/use-toast';
 import { ProjectFormData, ProjectResponse } from '@/types/project.types';
@@ -25,7 +25,6 @@ const ProjectComponent = ({
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
 
-  console.log('tabs in PROJECT COMPONENT: ', tabs);
   console.log('tabs in PROJECT COMPONENT: ', tabs);
   const onSubmit = async (values: ProjectFormData) => {
     try {

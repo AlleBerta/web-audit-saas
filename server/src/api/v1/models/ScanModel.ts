@@ -9,12 +9,11 @@ import {
   UpdatedAt,
   HasMany,
 } from 'sequelize-typescript';
-import { Project } from './ProjectModel';
+import { Target } from './TargetModel';
 import { ScanResult } from './ScanResultModel';
-import { ScanAttributes, ScanCreationAttributes } from './interfaces/scan.interface';
 
-@Table({ tableName: 'scans' }) // alias
-export class Scan extends Model<ScanAttributes, ScanCreationAttributes> {
+@Table({ tableName: 'scans' })
+export class Scan extends Model {
   @Column({
     type: DataType.INTEGER,
     autoIncrement: true,
@@ -22,30 +21,13 @@ export class Scan extends Model<ScanAttributes, ScanCreationAttributes> {
   })
   id!: number;
 
-  @ForeignKey(() => Project)
+  @ForeignKey(() => Target)
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
-    field: 'projectId',
+    field: 'targetId',
   })
-  projectId!: number;
-
-  @BelongsTo(() => Project)
-  project!: Project;
-
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-    field: 'domain',
-  })
-  domain!: string;
-
-  @Column({
-    type: DataType.STRING,
-    allowNull: true,
-    field: 'ip_domain',
-  })
-  ip_domain!: string;
+  targetId!: number;
 
   @Column({
     type: DataType.ENUM('pending', 'running', 'done', 'failed', 'canceled', 'none'),
@@ -82,9 +64,10 @@ export class Scan extends Model<ScanAttributes, ScanCreationAttributes> {
   @Column({ field: 'updated_at' })
   updatedAt!: Date;
 
-  @BelongsTo(() => Project)
-  projects!: Project[];
+  @BelongsTo(() => Target)
+  target!: Target;
 
+  // Relazione con scanResults (1 scan -> N scanResults)
   @HasMany(() => ScanResult, { onDelete: 'CASCADE' })
   scanResults?: ScanResult[];
 }

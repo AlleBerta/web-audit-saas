@@ -3,7 +3,7 @@ import { SoftwareCompositionChart } from './SoftwareCompositionChart';
 import { VulnerabilitiesList } from './VulnerabilitiesList';
 import { TargetsTable } from './TargetsTable';
 import { FilterBar } from './FilterBar';
-import { Target, TargetView } from '@/types/target.types';
+import { TargetView } from '@/types/target.types';
 import { ProjectDashboardProps } from '@/types/tab.types';
 import { TargetResponse } from '@/types/target.types';
 import { BUTTON_TYPES } from '@/constants/button_types';
@@ -13,6 +13,7 @@ import api from '@/lib/axios';
 import { ApiResponse } from '@/types/server_response.types';
 import { toast } from '@/hooks/use-toast';
 import { X } from 'lucide-react';
+import { mapDbStateToTargetStatus } from '@/lib/mapDbStateToTargetStatus';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
 export const DashboardContent = ({
@@ -38,53 +39,42 @@ export const DashboardContent = ({
 
   // Carico i dati in modo corretto
   const targetViews: TargetView[] = useMemo(() => {
-    if (!activeProjectData) return [];
+    if (!activeProjectData?.targets) return [];
 
-    const grouped: Record<string, TargetResponse[]> = {};
+    // Reset selezione
+    setSelectedTarget(null);
 
-    if (!activeProjectData?.scans) return [];
+    return activeProjectData.targets.map((target) => {
+      const scans = target.scans ?? [];
 
-    for (const scan of activeProjectData.scans) {
-      const target = scan.domain;
-      if (!grouped[target]) grouped[target] = [];
-      grouped[target].push(scan);
-    }
+      const latestScan =
+        scans.length > 0
+          ? [...scans].sort(
+              (a, b) => new Date(b.startTime ?? 0).getTime() - new Date(a.startTime ?? 0).getTime()
+            )[0]
+          : null;
 
-    return Object.entries(grouped).map(([target, scans]) => {
-      // Calcolo vulnerabilità aggregate
+      // Calcolo vulnerabilità aggregate da TUTTE le scansioni del target
       const allResults = scans.flatMap((s) => s.scanResults ?? []);
       const vulnerabilities = {
-        critical: allResults.filter((r) => r.severity === 'Critical').length,
-        high: allResults.filter((r) => r.severity === 'High').length,
-        medium: allResults.filter((r) => r.severity === 'Medium').length,
-        low: allResults.filter((r) => r.severity === 'Low').length,
+        critical: allResults.filter((r) => r.severity.toLowerCase() === 'critical').length,
+        high: allResults.filter((r) => r.severity.toLowerCase() === 'high').length,
+        medium: allResults.filter((r) => r.severity.toLowerCase() === 'medium').length,
+        low: allResults.filter((r) => r.severity.toLowerCase() === 'low').length,
       };
 
-      // Calcolo status: se anche uno è in progress → In Progress; se uno è failed → Error; altrimenti → Finished
+      // Status: running > failed > finished
       const hasRunning = scans.some((s) => s.state === 'running' || s.state === 'pending');
       const hasError = scans.some((s) => s.state === 'failed');
 
-      const status: TargetView['status'] = hasRunning
-        ? 'In Progress'
-        : hasError
-        ? 'Error'
-        : 'Finished';
-
-      // Calcolo lastScan (quello con data più recente)
-      const sortedByDate = [...scans].sort(
-        (a, b) => new Date(b.startTime ?? 0).getTime() - new Date(a.startTime ?? 0).getTime()
-      );
-      const lastScan = sortedByDate[0]?.startTime?.toString();
-
       return {
-        id: scans[0].id,
-        domain: scans[0].domain,
-        ip_domain: scans[0].ip_domain,
-        status,
-        scans,
-        lastScan,
-        newEvents: 0, // da calcolare se lo prevedi
-        nextScan: '', // opzionale: calcolabile da pianificazione
+        id: target.id,
+        domain: target.domain,
+        ip_domain: target.ip_domain,
+        status: mapDbStateToTargetStatus(latestScan?.state ?? 'none'),
+        newEvents: 0, // default
+        nextScanStarts: '', // opzionale
+        lastScanEnded: latestScan?.endTime,
         vulnerabilities,
         hasError,
       };
@@ -169,7 +159,7 @@ export const DashboardContent = ({
 
       // chiamata API al server
       const res = await api.post<ApiResponse<TargetResponse>>(
-        '/scan',
+        '/target',
         { domain: normalizedUrl, projectId: activeProjectData?.id },
         { withCredentials: true }
       );
@@ -184,7 +174,7 @@ export const DashboardContent = ({
         prev
           ? {
               ...prev,
-              scans: [...(prev.scans ?? []), newTarget], // ✅ aggiungo il nuovo target/scan all’array
+              targets: [...(prev.targets ?? []), newTarget], // ✅ aggiungo il nuovo target/scan all’array
             }
           : prev
       );
@@ -194,19 +184,20 @@ export const DashboardContent = ({
         id: newTarget.id,
         domain: newTarget.domain,
         ip_domain: newTarget.ip_domain,
-        status: 'In Progress', // o da newTarget.state se ce l’hai
+        status: 'In Progress',
         newEvents: 0,
-        lastScan: newTarget.startTime?.toString(),
-        nextScan: '',
+        lastScanEnded: '',
+        nextScanStarts: '',
         vulnerabilities: {
           critical: 0,
           high: 0,
           medium: 0,
           low: 0,
         },
-        hasError: newTarget.state === 'failed',
+        hasError: false,
       });
 
+      console.log('Muori piazzi: ', selectedTarget);
       toast({
         title: 'Target added successfully',
         description: `Target ${newTarget.domain} has been added.`,
@@ -223,6 +214,18 @@ export const DashboardContent = ({
     } finally {
       setButtonLoading(BUTTON_TYPES.ADD_TARGET, false);
     }
+  };
+
+  // Funzione per gestire l'eliminazione di un target
+  const handleDeleteTarget = (targetId: number) => {
+    setActiveProjectData((prev) =>
+      prev
+        ? {
+            ...prev,
+            targets: prev.targets?.filter((target) => target.id !== targetId) ?? [],
+          }
+        : prev
+    );
   };
 
   // Carica i filtri presenti in FilterBar
@@ -539,6 +542,7 @@ export const DashboardContent = ({
         <TargetsTable
           setSelectedTarget={setSelectedTarget}
           onButtonClick={handleButtonClick}
+          handleDeleteTarget={handleDeleteTarget}
           selectedTarget={selectedTarget}
           targetViews={targetViews}
           selectedButton={selectedButton}

@@ -10,8 +10,9 @@ import {
   HasMany,
 } from 'sequelize-typescript';
 import { User } from './UserModel';
-import { Scan } from './ScanModel';
 import { ProjectAttributes, ProjectCreationAttributes } from './interfaces/project.interface';
+import { Target } from './TargetModel';
+import { CreationOptional } from 'sequelize';
 @Table({ tableName: 'projects' })
 export class Project extends Model<ProjectAttributes, ProjectCreationAttributes> {
   @Column({
@@ -28,12 +29,6 @@ export class Project extends Model<ProjectAttributes, ProjectCreationAttributes>
     allowNull: false,
   })
   userId!: number;
-
-  // @Column({
-  //   type: DataType.STRING,
-  //   allowNull: false,
-  // })
-  // domain!: string;
 
   @Column({
     type: DataType.STRING,
@@ -58,6 +53,7 @@ export class Project extends Model<ProjectAttributes, ProjectCreationAttributes>
   @BelongsTo(() => User)
   users!: User;
 
-  @HasMany(() => Scan, { onDelete: 'CASCADE' })
-  scans?: Scan[];
+  // Relazione con targets (1 project -> N Targets)
+  @HasMany(() => Target, { onDelete: 'CASCADE' })
+  targets?: Target[];
 }

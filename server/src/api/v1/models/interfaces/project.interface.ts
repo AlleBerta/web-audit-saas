@@ -1,4 +1,3 @@
-// server/src/models/types/project.ts
 export interface ProjectAttributes {
   id: number;
   userId: number;

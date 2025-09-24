@@ -8,11 +8,13 @@ import { API_BASE_URL } from '@/config/conts';
 import { toast } from '@/hooks/use-toast';
 import { ApiResponse } from '@/types/server_response.types';
 import { ScanResponse, ScanStatus } from '@/types/scanResult.types';
+import api from '@/lib/axios';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
 export const TargetsTable = ({
   setSelectedTarget,
   onButtonClick,
+  handleDeleteTarget,
   selectedTarget,
   targetViews,
   selectedButton,
@@ -105,6 +107,55 @@ export const TargetsTable = ({
     }
   }
 
+  // Funzione per formattare le date in modo più leggibile
+  const formatDateTime = (dateString: string): string => {
+    if (!dateString) return 'N/A';
+
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInMilliseconds = now.getTime() - date.getTime();
+      const diffInHours = diffInMilliseconds / (1000 * 60 * 60);
+      const diffInDays = Math.floor(diffInHours / 24);
+
+      // Se la data è nel futuro (per nextScan)
+      if (diffInMilliseconds < 0) {
+        const futureDiffInHours = Math.abs(diffInHours);
+        const futureDiffInDays = Math.floor(futureDiffInHours / 24);
+
+        if (futureDiffInHours < 1) {
+          const minutes = Math.floor(Math.abs(diffInMilliseconds) / (1000 * 60));
+          return `tra ${minutes}min`;
+        } else if (futureDiffInHours < 24) {
+          return `tra ${Math.floor(futureDiffInHours)}h`;
+        } else if (futureDiffInDays < 7) {
+          return `tra ${futureDiffInDays} giorni`;
+        }
+      }
+
+      // Per date passate (lastScan) o future lontane
+      if (diffInHours < 1 && diffInMilliseconds > 0) {
+        const minutes = Math.floor(diffInMilliseconds / (1000 * 60));
+        return `${minutes}min fa`;
+      } else if (diffInHours < 24 && diffInMilliseconds > 0) {
+        return `${Math.floor(diffInHours)}h fa`;
+      } else if (diffInDays < 7 && diffInMilliseconds > 0) {
+        return `${diffInDays} giorni fa`;
+      }
+
+      // Per date più lontane, mostra la data formattata
+      return date.toLocaleDateString('it-IT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return 'Data non valida';
+    }
+  };
+
   // Handler per cliccare sulla riga
   const handleRowClick = (target: TargetView) => {
     if (selectedTarget !== target) {
@@ -138,11 +189,33 @@ export const TargetsTable = ({
     // Implementa la logica per i report
   };
 
-  const handleDelete = (e: React.MouseEvent, target: TargetView) => {
+  const handleDelete = async (e: React.MouseEvent, target: TargetView) => {
     e.stopPropagation();
+    setSelectedTarget(target);
     if (window.confirm(`Sei sicuro di voler eliminare ${target.domain}?`)) {
       console.log('Delete clicked for:', target.domain);
       // Implementa la logica per eliminare il target
+      try {
+        const res = await api.delete<ApiResponse<number>>(`/target/${target.id}`, {
+          withCredentials: true,
+        });
+        if (res.data.success) {
+          toast({
+            title: res.data.message,
+            description: `Eliminated Target ${target.domain}`,
+          });
+
+          setSelectedTarget(null); // non ho più un target selezionato
+          handleDeleteTarget(target.id); // Elimino anche il target lato grafico e aggiorno il padre
+        }
+      } catch (err: any) {
+        console.log('Error handleDelete: ', err);
+        toast({
+          title: 'Error',
+          description: 'Error, please retry',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -152,7 +225,7 @@ export const TargetsTable = ({
   };
 
   console.log('selectedTarget in TargetsTable: ', selectedTarget);
-
+  console.log('targetViews: ', targetViews);
   return (
     <Card>
       <CardContent className="p-0">
@@ -203,7 +276,8 @@ export const TargetsTable = ({
                         </div>
                         <div className="text-sm text-gray-600">🇺🇸 {target.ip_domain}</div>
                         <div className="text-sm text-gray-600">
-                          Next scan: {target.nextScan} | Last scan: {target.lastScan}
+                          Next scan: {formatDateTime(target.nextScanStarts ?? '')} | Last scan:{' '}
+                          {formatDateTime(target.lastScanEnded ?? '')}
                         </div>
                       </div>
                     </td>
