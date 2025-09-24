@@ -53,6 +53,7 @@ Inspired by platforms like [ImmuniWeb](https://www.immuniweb.com/), this project
 Inside the [`server/docs`](server/docs) folder you can also find:
 
 - [`db-schema.sql`](server/docs/db-schema.sql): SQL script to create the database
+- [`db-schema.dbml`](server/docs/db-schema.dbml): DBML script to dump the dbdocs project
 
 You can also view it interactively via [dbdocs.io](https://dbdocs.io) if preferred.
 

@@ -6,7 +6,7 @@ import config from './config/config';
 import { db } from '@api/v1/models';
 import userRoutes from '@api/v1/routes/UserRoutes';
 import projectRouter from '@api/v1/routes/ProjectRoutes';
-import scanRouter from '@api/v1/routes/ScanRoutes';
+import targetRouter from '@api/v1/routes/TargetRoutes';
 import { errorHandler } from '@api/v1/middlewares/errorHandler';
 import deserializeUser from '@api/v1/middlewares/deserializeUser';
 import { requireUser } from '@api/v1/middlewares/requireUser';
@@ -33,7 +33,7 @@ app.use(requireUser as unknown as RequestHandler);
 
 // Routes tutte protette
 app.use('/project', projectRouter);
-app.use('/scan', scanRouter);
+app.use('/target', targetRouter);
 // middlewares
 app.use(errorHandler); // Gestisce gli errori
 

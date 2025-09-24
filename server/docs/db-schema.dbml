@@ -1,0 +1,67 @@
+Project web_audit_saas {
+  database_type: "MySQL"
+}
+
+Table users {
+  id int [pk, increment]
+  email varchar(255) [not null, unique]
+  name varchar(255) [not null]
+  surname varchar(255) [not null]
+  password varchar(255) [not null]
+  role varchar(255) [not null, default: 'user']
+  created_at datetime
+  updated_at datetime
+}
+
+Table projects {
+  id int [pk, increment]
+  userId int [not null, ref: > users.id]
+  name varchar(255) [not null]
+  createdAt datetime [not null]
+  updatedAt datetime [not null]
+}
+
+Table targets {
+  id int [pk, increment]
+  projectId int [not null, ref: > projects.id]
+  domain varchar(255) [not null]
+  ip_domain varchar(255)
+  created_at datetime
+  updated_at datetime
+
+  indexes {
+    (projectId, domain) [unique]
+  }
+}
+
+Table scans {
+  id int [pk, increment]
+  targetId int [not null, ref: > targets.id]
+  state enum('pending','running','done','failed','canceled','none') [not null]
+  start_time datetime
+  end_time datetime
+  report_path varchar(255)
+  created_at datetime
+  updated_at datetime
+}
+
+Table scan_results {
+  id int [pk, increment]
+  scanId int [not null, ref: > scans.id]
+  vulnerabilityType varchar(255) [not null]
+  severity varchar(255) [not null]
+  description varchar(255)
+  urlAffected varchar(255)
+  createdAt datetime
+  updatedAt datetime [not null]
+}
+
+Table sessions {
+  id int [pk, increment]
+  refreshToken varchar(512) [not null]
+  revoked boolean [not null]
+  expiresAt datetime
+  userId int [not null, ref: > users.id]
+  createdAt datetime [not null]
+  updatedAt datetime [not null]
+}

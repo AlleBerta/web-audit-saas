@@ -9,7 +9,7 @@ export interface ProjectResponse {
   id: number;
   userId: number;
   name: string;
-  createdAt: Date;
-  updatedAt: Date;
-  scans?: TargetResponse[];
+  createdAt?: Date;
+  updatedAt?: Date;
+  targets?: TargetResponse[];
 }
