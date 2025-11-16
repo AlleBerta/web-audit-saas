@@ -37,6 +37,7 @@ export class Session extends Model<SessionAttributes, SessionCreationAttributes>
   createdAt!: Date;
 
   @UpdatedAt
+  // @Column({ type: DataType.DATE,}) già integrato di default in @UpdatedAT
   updatedAt!: Date;
 
   @BelongsTo(() => require('./UserModel').User)

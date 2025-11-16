@@ -32,6 +32,8 @@ export class Scan extends Model {
   @Column({
     type: DataType.ENUM('pending', 'running', 'done', 'failed', 'canceled', 'none'),
     allowNull: false,
+    field: 'state',
+    defaultValue: 'none',
   })
   state!: 'pending' | 'running' | 'done' | 'failed' | 'canceled' | 'none';
 
@@ -56,12 +58,17 @@ export class Scan extends Model {
   })
   reportPath?: string;
 
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+    field: 'pentest_path',
+  })
+  pentestPath?: string;
+
   @CreatedAt
-  @Column({ field: 'created_at' })
   createdAt!: Date;
 
   @UpdatedAt
-  @Column({ field: 'updated_at' })
   updatedAt!: Date;
 
   @BelongsTo(() => Target)

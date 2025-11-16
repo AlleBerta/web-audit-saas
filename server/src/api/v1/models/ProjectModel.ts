@@ -38,14 +38,12 @@ export class Project extends Model<ProjectAttributes, ProjectCreationAttributes>
 
   @CreatedAt
   @Column({
-    type: DataType.DATE,
     allowNull: false,
   })
   createdAt!: Date;
 
   @UpdatedAt
   @Column({
-    type: DataType.DATE,
     allowNull: false,
   })
   updatedAt!: Date;

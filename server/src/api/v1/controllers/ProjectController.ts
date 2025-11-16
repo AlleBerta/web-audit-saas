@@ -121,44 +121,6 @@ export const getProjects = async (req: AuthenticatedRequest, res: Response, next
       });
     }
 
-    // Mostra tutti i risultati di tutte le scansioni per ogni target
-    // const project = await Project.findByPk(projectId, {
-    //   attributes: ['id', 'name', 'userId'],
-    //   include: [
-    //     {
-    //       model: Target,
-    //       as: 'targets',
-    //       attributes: ['id', 'projectId', 'domain', 'ip_domain'],
-    //       include: [
-    //         {
-    //           model: Scan,
-    //           as: 'scans',
-    //           attributes: ['id', 'state', 'start_time', 'end_time'],
-    //           include: [
-    //             {
-    //               model: ScanResult,
-    //               as: 'scanResults',
-    //               attributes: ['id', 'scanId', 'vulnerabilityType', 'severity', 'description'],
-    //             },
-    //           ],
-    //         },
-    //       ],
-    //     },
-    //   ],
-    //   order: [
-    //     ['id', 'ASC'], // project.id asc
-    //     [{ model: Target, as: 'targets' }, 'id', 'ASC'], // target.id asc
-    //     [{ model: Target, as: 'targets' }, { model: Scan, as: 'scans' }, 'id', 'ASC'], // scan.id asc
-    //     [
-    //       { model: Target, as: 'targets' },
-    //       { model: Scan, as: 'scans' },
-    //       { model: ScanResult, as: 'scanResults' },
-    //       'id',
-    //       'DESC',
-    //     ], // scanResult.id desc
-    //   ],
-    // });
-
     // mostra tutti i risultati dell'ultima scansione per ogni target
     const project = await Project.findByPk(projectId, {
       attributes: ['id', 'name', 'userId'],
@@ -181,6 +143,7 @@ export const getProjects = async (req: AuthenticatedRequest, res: Response, next
                   as: 'scanResults',
                   attributes: ['id', 'scanId', 'vulnerabilityType', 'severity', 'description'],
                   order: [['id', 'DESC']],
+                  separate: true,
                 },
               ],
             },
@@ -192,16 +155,6 @@ export const getProjects = async (req: AuthenticatedRequest, res: Response, next
         [{ model: Target, as: 'targets' }, 'id', 'ASC'], // target.id asc
       ],
     });
-
-    // const response = project?.toJSON() as any;
-    // // Trasforma scans[] in lastScan
-    // if (response?.targets) {
-    //   response.targets = response.targets.map((target: any) => ({
-    //     ...target,
-    //     lastScan: target.scans?.[0] || null, // prendi solo l'ultimo
-    //     scans: undefined, // rimuovi scans se non serve
-    //   }));
-    // }
 
     console.log('single project');
     console.log(project);

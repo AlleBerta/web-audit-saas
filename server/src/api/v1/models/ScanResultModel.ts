@@ -6,6 +6,7 @@ import {
   ForeignKey,
   CreatedAt,
   BelongsTo,
+  UpdatedAt,
 } from 'sequelize-typescript';
 import { Scan } from './ScanModel';
 import {
@@ -54,10 +55,10 @@ export class ScanResult extends Model<ScanResultAttributes, ScanResultCreationAt
   urlAffected?: string;
 
   @CreatedAt
-  @Column({
-    type: DataType.DATE,
-  })
   createdAt!: Date;
+
+  @UpdatedAt
+  updatedAt?: Date;
 
   @BelongsTo(() => Scan)
   scan!: Scan;

@@ -14,6 +14,7 @@ import { ApiResponse } from '@/types/server_response.types';
 import { toast } from '@/hooks/use-toast';
 import { X } from 'lucide-react';
 import { mapDbStateToTargetStatus } from '@/lib/mapDbStateToTargetStatus';
+import { late } from 'zod';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
 export const DashboardContent = ({
@@ -50,10 +51,12 @@ export const DashboardContent = ({
       const latestScan =
         scans.length > 0
           ? [...scans].sort(
-              (a, b) => new Date(b.startTime ?? 0).getTime() - new Date(a.startTime ?? 0).getTime()
+              (a, b) => new Date(b.end_time ?? 0).getTime() - new Date(a.start_time ?? 0).getTime()
             )[0]
           : null;
 
+      console.log('scans: ', scans);
+      console.log('latestScan: ', latestScan);
       // Calcolo vulnerabilità aggregate da TUTTE le scansioni del target
       const allResults = scans.flatMap((s) => s.scanResults ?? []);
       const vulnerabilities = {
@@ -66,7 +69,12 @@ export const DashboardContent = ({
       // Status: running > failed > finished
       const hasRunning = scans.some((s) => s.state === 'running' || s.state === 'pending');
       const hasError = scans.some((s) => s.state === 'failed');
-
+      console.log(
+        'end time: ',
+        latestScan?.end_time,
+        ' oppure ',
+        latestScan?.end_time ? new Date(latestScan.end_time).toISOString() : undefined
+      );
       return {
         id: target.id,
         domain: target.domain,
@@ -74,7 +82,9 @@ export const DashboardContent = ({
         status: mapDbStateToTargetStatus(latestScan?.state ?? 'none'),
         newEvents: 0, // default
         nextScanStarts: '', // opzionale
-        lastScanEnded: latestScan?.endTime,
+        lastScanEnded: latestScan?.end_time
+          ? new Date(latestScan.end_time).toISOString()
+          : undefined,
         vulnerabilities,
         hasError,
       };

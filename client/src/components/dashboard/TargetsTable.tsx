@@ -7,7 +7,7 @@ import { BUTTON_TYPES } from '@/constants/button_types';
 import { API_BASE_URL } from '@/config/conts';
 import { toast } from '@/hooks/use-toast';
 import { ApiResponse } from '@/types/server_response.types';
-import { ScanResponse, ScanStatus } from '@/types/scanResult.types';
+import { LastScan, ScanResponse } from '@/types/scan.types';
 import api from '@/lib/axios';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
@@ -26,14 +26,15 @@ export const TargetsTable = ({
    * | GET    | `/scan-status/:idScan` | Controlla lo stato della scansione    |
    * | GET    | `/result/:idScan`      | Recupera il file JSON della scansione |
    */
-  async function startScan(url: string): Promise<number | null> {
+  async function startScan(targetId: number, url: string): Promise<number | null> {
     try {
-      const res = await axios.post<ApiResponse<ScanResponse>>(`${API_BASE_URL}/start-scan`, {
+      const res = await api.post<ApiResponse<ScanResponse>>('/scan/start', {
+        targetId,
         url,
       });
       toast({
         title: res.data.message,
-        description: 'La scansione durerà qualche minuto',
+        description: `Scan for "${url}" is started, it will take a while.`,
       });
       return res.data.data.idScan;
     } catch (err: any) {
@@ -49,11 +50,9 @@ export const TargetsTable = ({
 
   async function checkScanStatus(
     idScan: number
-  ): Promise<'pending' | 'processing' | 'done' | 'error'> {
+  ): Promise<'pending' | 'processing' | 'running' | 'done' | 'error'> {
     try {
-      const res = await axios.get<ApiResponse<ScanStatus>>(
-        `http://192.168.179.3:5000/scan-status/${idScan}`
-      );
+      const res = await api.get<ApiResponse<ScanResponse>>(`scan/${idScan}/status`);
       return res.data.data.status;
     } catch (err) {
       console.error('Errore nel recupero dello stato:', err);
@@ -63,12 +62,12 @@ export const TargetsTable = ({
 
   async function getScanResult(idScan: number): Promise<any> {
     try {
-      const res = await axios.get(`http://192.168.179.3:5000/result/${idScan}`);
+      const res = await api.get<ApiResponse<LastScan>>(`scan/${idScan}/completed`);
       toast({
-        title: res.data.message ?? 'Bravo',
+        title: res.data.message ?? 'Scan Completed',
         description: 'You can now check all data founded',
       });
-      return res.data;
+      return res.data.data;
     } catch (err: any) {
       console.error('Errore nel recupero del risultato:', err);
       toast({
@@ -80,22 +79,24 @@ export const TargetsTable = ({
     }
   }
 
-  async function startAndPoll(url: string) {
+  async function startAndPoll(targetId: number, url: string) {
     try {
+      console.log('Entro in starAndPoll');
       console.log('url: ', url);
-      const idScan = await startScan(url);
+      const idScan = await startScan(targetId, url);
       if (!idScan) return;
 
       console.log('idScan: ', idScan);
       const interval = setInterval(async () => {
         const status = await checkScanStatus(idScan);
+        console.log('Scan status:', status);
         if (status === 'done') {
           clearInterval(interval);
           const result = await getScanResult(idScan);
           onButtonClick('unselected'); // tolgo la tendina
           console.log('✅ Risultato:', result);
           // Puoi salvarlo nello stato o mostrarlo a schermo
-        } else if (status === 'processing') {
+        } else if (status === 'processing' || status === 'running') {
           console.log('⏳ In attesa della fine della scansione...');
         } else {
           clearInterval(interval);
@@ -109,6 +110,7 @@ export const TargetsTable = ({
 
   // Funzione per formattare le date in modo più leggibile
   const formatDateTime = (dateString: string): string => {
+    console.log(' Formatting date: ', dateString);
     if (!dateString) return 'N/A';
 
     try {
@@ -168,7 +170,7 @@ export const TargetsTable = ({
     e.stopPropagation();
     setSelectedTarget(target);
     onButtonClick(buttonType); // Attivo la tendina che mostra il caricamento
-    startAndPoll(`https://${target.domain}`);
+    startAndPoll(target.id, `https://${target.domain}`);
   };
 
   const handleSettings = (e: React.MouseEvent, target: TargetView) => {

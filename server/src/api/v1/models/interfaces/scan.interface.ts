@@ -1,12 +1,17 @@
 export interface ScanAttributes {
   id: number;
   targetId: number;
-  state: 'pending' | 'running' | 'done' | 'failed' | 'canceled' | 'none';
+  state: ScanState;
   startTime?: Date;
   endTime?: Date;
   reportPath?: string;
+  pentestPath?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface ScanState {
+  state: 'pending' | 'running' | 'done' | 'failed' | 'canceled' | 'none';
 }
 
 export interface ScanCreationAttributes

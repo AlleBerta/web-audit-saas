@@ -52,11 +52,9 @@ export class Target extends Model<TargetAttributes, TargetCreationAttributes> {
   ip_domain?: string;
 
   @CreatedAt
-  @Column({ field: 'created_at' })
   createdAt!: Date;
 
   @UpdatedAt
-  @Column({ field: 'updated_at' })
   updatedAt!: Date;
 
   @BelongsTo(() => Project)
