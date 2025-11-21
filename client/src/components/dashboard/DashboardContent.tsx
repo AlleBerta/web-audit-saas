@@ -3,7 +3,7 @@ import { SoftwareCompositionChart } from './SoftwareCompositionChart';
 import { VulnerabilitiesList } from './VulnerabilitiesList';
 import { TargetsTable } from './TargetsTable';
 import { FilterBar } from './FilterBar';
-import { TargetView } from '@/types/target.types';
+import { TargetStatus, TargetView } from '@/types/target.types';
 import { ProjectDashboardProps } from '@/types/tab.types';
 import { TargetResponse } from '@/types/target.types';
 import { BUTTON_TYPES } from '@/constants/button_types';
@@ -91,6 +91,63 @@ export const DashboardContent = ({
       };
     });
   }, [activeProjectData]);
+
+  // Stati per i filtri
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<TargetStatus | 'all'>('all');
+
+  const filters: {
+    label: string;
+    value: TargetStatus;
+    bg: string;
+    text: string;
+  }[] = [
+    {
+      label: 'Pending',
+      value: 'In Progress',
+      bg: 'bg-blue-100',
+      text: 'text-blue-800',
+    },
+    {
+      label: 'Running',
+      value: 'Running',
+      bg: 'bg-yellow-100',
+      text: 'text-yellow-800',
+    },
+    {
+      label: 'Completed',
+      value: 'Finished',
+      bg: 'bg-green-100',
+      text: 'text-green-800',
+    },
+    {
+      label: 'Error',
+      value: 'Error',
+      bg: 'bg-red-100',
+      text: 'text-red-800',
+    },
+  ];
+
+  // Targets filtrati in base ai filtri
+  const filteredTargets = useMemo(() => {
+    return targetViews
+      .filter((t) =>
+        // FILTRO PER STATO
+        statusFilter === 'all' ? true : t.status === statusFilter
+      )
+      .filter(
+        (t) =>
+          // FILTRO PER SEARCH
+          t.domain.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          t.ip_domain?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+  }, [targetViews, searchQuery, statusFilter]);
+
+  useEffect(() => {
+    if (selectedTarget && !filteredTargets.some((t) => t.id === selectedTarget.id)) {
+      setSelectedTarget(null);
+    }
+  }, [filteredTargets, selectedTarget]);
 
   // Funzione per gestire lo stato di loading per bottoni specifici
   const setButtonLoading = (buttonType: ButtonType, loading: boolean) => {
@@ -367,17 +424,26 @@ export const DashboardContent = ({
                   type="text"
                   placeholder="Search targets..."
                   className="w-full p-2 border border-gray-300 rounded"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <div className="flex gap-2 flex-wrap">
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                    Active
-                  </span>
-                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-                    Pending
-                  </span>
-                  <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                    Completed
-                  </span>
+                  {filters.map((filter) => (
+                    <button
+                      key={filter.value}
+                      onClick={() =>
+                        setStatusFilter((prev) => (prev === filter.value ? 'all' : filter.value))
+                      }
+                      className={`
+                      px-3 py-1 rounded-full text-sm transition
+                      ${filter.bg} ${filter.text}
+                      hover:opacity-80
+                      ${statusFilter === filter.value ? 'ring-2 ring-offset-1 ring-blue-400' : ''}
+                    `}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </CardContent>
@@ -536,8 +602,8 @@ export const DashboardContent = ({
     <div className="p-6 space-y-6">
       {/* Top Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SoftwareCompositionChart targetViews={targetViews} selectedTarget={selectedTarget} />
-        <VulnerabilitiesList targetViews={targetViews} selectedTarget={selectedTarget} />
+        <SoftwareCompositionChart targetViews={filteredTargets} selectedTarget={selectedTarget} />
+        <VulnerabilitiesList targetViews={filteredTargets} selectedTarget={selectedTarget} />
       </div>
 
       {/* Filters and Actions */}
@@ -556,7 +622,7 @@ export const DashboardContent = ({
           onButtonClick={handleButtonClick}
           handleDeleteTarget={handleDeleteTarget}
           selectedTarget={selectedTarget}
-          targetViews={targetViews}
+          targetViews={filteredTargets}
           selectedButton={selectedButton}
         />
       </div>

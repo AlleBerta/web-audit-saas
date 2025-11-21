@@ -162,7 +162,7 @@ export const TargetsTable = ({
 
   useEffect(() => {
     targetViews?.forEach((t) => {
-      if (t.status === 'running' && t.id) {
+      if (t.status === 'Running' && t.id) {
         startPolling(t.id, t.lastScanId ?? 0);
       }
     });

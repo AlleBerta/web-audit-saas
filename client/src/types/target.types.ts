@@ -11,7 +11,7 @@ export interface TargetResponse {
   scans?: LastScan[];
 }
 
-export type TargetStatus = 'In Progress' | 'running' | 'Finished' | 'Error';
+export type TargetStatus = 'In Progress' | 'Running' | 'Finished' | 'Error';
 
 export interface TargetView {
   id: number; // id del target
