@@ -77,6 +77,7 @@ export const DashboardContent = ({
       );
       return {
         id: target.id,
+        lastScanId: latestScan?.id,
         domain: target.domain,
         ip_domain: target.ip_domain,
         status: mapDbStateToTargetStatus(latestScan?.state ?? 'none'),
@@ -245,6 +246,7 @@ export const DashboardContent = ({
         return (
           <Card>
             <CardContent>
+              {/* Mostra i risultati dei target che hanno finito */}
               <h3 className="text-lg font-semibold mb-4 text-blue-600">📄 New Targets (10)</h3>
               <div className="space-y-3">
                 <div className="p-3 bg-blue-50 rounded border-l-4 border-blue-500">

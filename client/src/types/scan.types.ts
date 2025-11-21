@@ -2,6 +2,7 @@ import { ScanResult } from './scanResult.types';
 
 export interface LastScan {
   id: number;
+  targetId?: number;
   state: 'pending' | 'running' | 'done' | 'failed' | 'none' | 'canceled';
   start_time?: string;
   end_time?: string;

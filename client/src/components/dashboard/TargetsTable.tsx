@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { PropsTargets, TargetView } from '@/types/target.types';
+import { PropsTargets, TargetStatus, TargetView } from '@/types/target.types';
 import axios from 'axios';
 import { BUTTON_TYPES } from '@/constants/button_types';
 import { API_BASE_URL } from '@/config/conts';
@@ -9,6 +9,17 @@ import { toast } from '@/hooks/use-toast';
 import { ApiResponse } from '@/types/server_response.types';
 import { LastScan, ScanResponse } from '@/types/scan.types';
 import api from '@/lib/axios';
+import { useEffect } from 'react';
+import {
+  ExternalLinkIcon,
+  Eye,
+  EyeIcon,
+  FileChartColumn,
+  FileChartColumnIcon,
+  PlayIcon,
+  SettingsIcon,
+  TrashIcon,
+} from 'lucide-react';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
 export const TargetsTable = ({
@@ -19,6 +30,7 @@ export const TargetsTable = ({
   targetViews,
   selectedButton,
 }: PropsTargets) => {
+  const activePollings = new Set<number>(); // per tenere traccia di tutti i polling attivi
   /**
    * | Metodo | Endpoint               | Cosa fa                               |
    * | ------ | ---------------------- | ------------------------------------- |
@@ -26,7 +38,7 @@ export const TargetsTable = ({
    * | GET    | `/scan-status/:idScan` | Controlla lo stato della scansione    |
    * | GET    | `/result/:idScan`      | Recupera il file JSON della scansione |
    */
-  async function startScan(targetId: number, url: string): Promise<number | null> {
+  async function startScan(targetId: number, url: string) {
     try {
       const res = await api.post<ApiResponse<ScanResponse>>('/scan/start', {
         targetId,
@@ -36,7 +48,10 @@ export const TargetsTable = ({
         title: res.data.message,
         description: `Scan for "${url}" is started, it will take a while.`,
       });
-      return res.data.data.idScan;
+      const idScan = res.data.data.idScan;
+
+      // Avvio il polling per questo scan
+      startPolling(idScan, targetId);
     } catch (err: any) {
       console.error("Errore durante l'avvio della scansione:", err);
       toast({
@@ -44,7 +59,6 @@ export const TargetsTable = ({
         description: err.response.data.message ?? 'Please, Retry',
         variant: 'destructive',
       });
-      return null;
     }
   }
 
@@ -63,9 +77,11 @@ export const TargetsTable = ({
   async function getScanResult(idScan: number): Promise<any> {
     try {
       const res = await api.get<ApiResponse<LastScan>>(`scan/${idScan}/completed`);
+      const getDomain = await api.get<ApiResponse<any>>(`/target/${res.data.data.targetId}/domain`);
+      console.log('------RESSSS: ' + res);
       toast({
-        title: res.data.message ?? 'Scan Completed',
-        description: 'You can now check all data founded',
+        title: `Scan Completed for ${getDomain.data.data.domain ?? 'N/A'}`,
+        description: 'Reload the page to see updated results.',
       });
       return res.data.data;
     } catch (err: any) {
@@ -79,34 +95,78 @@ export const TargetsTable = ({
     }
   }
 
-  async function startAndPoll(targetId: number, url: string) {
+  async function startPolling(idScan: number, targetId: number) {
+    // se esiste già il polling, non faccio nulla
+    if (activePollings.has(idScan)) return;
+    // Altrimenti la aggiungo e inizio il polling
+    activePollings.add(idScan);
     try {
-      console.log('Entro in starAndPoll');
-      console.log('url: ', url);
-      const idScan = await startScan(targetId, url);
-      if (!idScan) return;
-
-      console.log('idScan: ', idScan);
       const interval = setInterval(async () => {
         const status = await checkScanStatus(idScan);
-        console.log('Scan status:', status);
+
         if (status === 'done') {
           clearInterval(interval);
-          const result = await getScanResult(idScan);
+          activePollings.delete(idScan);
           onButtonClick('unselected'); // tolgo la tendina
+
+          const result = await getScanResult(idScan);
+
           console.log('✅ Risultato:', result);
-          // Puoi salvarlo nello stato o mostrarlo a schermo
+
+          // Aggiorno UI
+          // updateScanResult(targetId, result);
+          // nel mentre aggiorno la pagina
+
+          setTimeout(() => {
+            window.location.reload();
+          }, 800);
         } else if (status === 'processing' || status === 'running') {
           console.log('⏳ In attesa della fine della scansione...');
         } else {
           clearInterval(interval);
-          console.error('❌ Errore nel polling');
+          activePollings.delete(idScan);
+          console.error('❌ Errore nel polling, stato:', status);
         }
       }, 5000);
     } catch (err) {
-      console.error('❌ Errore nello startAndPoll:', err);
+      activePollings.delete(idScan);
+      console.error('❌ Errore nello startPolling:', err);
     }
   }
+
+  // const updateScanResult = (targetId: number, scanResult: LastScan) => {
+  //   setSelectedTarget(prev => {
+  //     // nulla è selezionato → non fai nulla
+  //     if (!prev) return prev;
+
+  //     // un altro target è selezionato → non fai nulla
+  //     if (prev.id !== targetId) return prev;
+
+  //     // aggiorniamo SOLO il target selezionato attualmente
+  //     return {
+  //       ...prev,
+  //       status: 'Finished',
+  //       lastScanId: scanResult.id,
+  //       lastScanEnded: scanResult.end_time,
+  //       vulnerabilities: {
+  //         critical: scanResult.vulns.critical,
+  //         high: scanResult.vulns.high,
+  //         medium: scanResult.vulns.medium,
+  //         low: scanResult.vulns.low,
+  //       },
+  //       newEvents: scanResult.newEvents ?? prev.newEvents,
+  //       hasError: false,
+  //     };
+  //   });
+  // };
+
+  useEffect(() => {
+    targetViews?.forEach((t) => {
+      if (t.status === 'running' && t.id) {
+        startPolling(t.id, t.lastScanId ?? 0);
+      }
+    });
+  });
 
   // Funzione per formattare le date in modo più leggibile
   const formatDateTime = (dateString: string): string => {
@@ -170,7 +230,7 @@ export const TargetsTable = ({
     e.stopPropagation();
     setSelectedTarget(target);
     onButtonClick(buttonType); // Attivo la tendina che mostra il caricamento
-    startAndPoll(target.id, `https://${target.domain}`);
+    startScan(target.id, `https://${target.domain}`);
   };
 
   const handleSettings = (e: React.MouseEvent, target: TargetView) => {
@@ -325,9 +385,13 @@ export const TargetsTable = ({
                                 variant="ghost"
                                 size={'default'}
                                 className="text-green-600 hover:bg-green-100 hover:text-green-700 transition-all duration-150 ease-in-out"
+                                disabled={
+                                  target.status === 'In Progress' ||
+                                  (Boolean(target.id) && activePollings.has(target.id))
+                                }
                                 onClick={(e) => handleStartScan(e, BUTTON_TYPES.SCAN_NOW, target)}
                               >
-                                ▶️
+                                <PlayIcon className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -343,7 +407,7 @@ export const TargetsTable = ({
                                 className="text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-all duration-150"
                                 onClick={(e) => handleSettings(e, target)}
                               >
-                                ⚙️
+                                <SettingsIcon className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -359,7 +423,7 @@ export const TargetsTable = ({
                                 className="text-gray-600 hover:bg-purple-100 hover:text-purple-700 transition-all duration-150"
                                 onClick={(e) => handleView(e, target)}
                               >
-                                👁️
+                                <EyeIcon className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -375,7 +439,7 @@ export const TargetsTable = ({
                                 className="text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 transition-all duration-150"
                                 onClick={(e) => handleReports(e, target)}
                               >
-                                📊
+                                <FileChartColumn className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -391,7 +455,7 @@ export const TargetsTable = ({
                                 className="text-red-600 hover:bg-red-100 hover:text-red-700 transition-all duration-150"
                                 onClick={(e) => handleDelete(e, target)}
                               >
-                                🗑️
+                                <TrashIcon className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -407,7 +471,7 @@ export const TargetsTable = ({
                                 className="text-gray-600 hover:bg-gray-100 hover:text-gray-700 transition-all duration-150"
                                 onClick={(e) => handleExternalLink(e, target)}
                               >
-                                ↗️
+                                <ExternalLinkIcon className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>

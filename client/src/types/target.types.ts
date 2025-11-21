@@ -1,5 +1,4 @@
 import { LastScan } from './scan.types';
-import { ScanResult } from './scanResult.types';
 import { BUTTON_TYPES } from '@/constants/button_types';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
@@ -12,10 +11,11 @@ export interface TargetResponse {
   scans?: LastScan[];
 }
 
-export type TargetStatus = 'In Progress' | 'Finished' | 'Error';
+export type TargetStatus = 'In Progress' | 'running' | 'Finished' | 'Error';
 
 export interface TargetView {
-  id: number; // id scanResult
+  id: number; // id del target
+  lastScanId?: number; // id dell'ultimo scan
   domain: string;
   ip_domain?: string;
   status: TargetStatus; // Rappresenta lo stato del Target, non quello di ogni singolo scan

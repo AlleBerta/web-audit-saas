@@ -13,7 +13,6 @@ import { ScanResult } from '../models/ScanResultModel';
  * @access private
  */
 export const createScan = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  console.log('PORCODDIO. ', req.body);
   let newScan: Scan | null = null; // variabile disponibile a tutta la funzione
   try {
     let { url, targetId } = req.body;
@@ -113,7 +112,7 @@ export const getCompletedScan = async (
     }
 
     const scanResult = await Scan.findByPk(scanId, {
-      attributes: ['id', 'state', 'start_time', 'end_time'],
+      attributes: ['id', 'state', 'targetId', 'start_time', 'end_time'],
       include: [
         {
           model: ScanResult,

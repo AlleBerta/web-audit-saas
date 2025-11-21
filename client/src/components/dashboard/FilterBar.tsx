@@ -2,112 +2,10 @@ import { TargetsButton } from '@/components/ui/targetButton';
 import { Props, PropsFilterBar } from '@/types/target.types';
 import axios from 'axios';
 import { BUTTON_TYPES } from '@/constants/button_types';
+import { FileSearchIcon, PlayIcon, SearchIcon } from 'lucide-react';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
 export const FilterBar = ({ onButtonClick, selectedButton, isLoading }: PropsFilterBar) => {
-  // const testPy = async () => {
-  //   try {
-  //     // Sostituisci con l'indirizzo IP della tua VM Apache
-  //     const apacheUrl = 'http://192.168.179.3/cgi-bin/hello.py';
-
-  //     console.log(`Tentativo di chiamata Axios a: ${apacheUrl}`);
-
-  //     // Esegui la richiesta GET con Axios
-  //     axios
-  //       .post('http://192.168.179.3:5000/start-scan', {
-  //         url: 'http://example.com',
-  //       })
-  //       .then((res) => {
-  //         console.log(res.data);
-  //         alert(
-  //           'Risposta da Apache (controlla la console per i dettagli): ' +
-  //             String(res.data).substring(0, 100) +
-  //             '...'
-  //         ); // Mostra un estratto
-  //       });
-  //   } catch (error) {
-  //     // Axios cattura gli errori HTTP (es. 4xx, 5xx) direttamente qui
-  //     if (axios.isAxiosError(error)) {
-  //       // Errore specifico di Axios (es. risposta dal server con status non 2xx)
-  //       console.error('Errore Axios durante la chiamata ad Apache:', error.message);
-  //       if (error.response) {
-  //         // Il server ha risposto con uno status code fuori dal range 2xx
-  //         console.error('Dettagli errore risposta:', error.response.data);
-  //         console.error('Status:', error.response.status);
-  //         console.error('Headers:', error.response.headers);
-  //       } else if (error.request) {
-  //         // La richiesta è stata fatta ma non c'è stata risposta (es. server offline, CORS bloccato)
-  //         console.error('Nessuna risposta ricevuta:', error.request);
-  //       } else {
-  //         // Qualcosa è andato storto nella configurazione della richiesta
-  //         console.error('Errore configurazione richiesta:', error.message);
-  //       }
-  //       alert('Errore durante la chiamata ad Apache! Controlla la console per i dettagli Axios.');
-  //     } else {
-  //       // Altri tipi di errori (es. errori di rete generici)
-  //       console.error('Errore generico durante la chiamata ad Apache:', error);
-  //       alert('Errore generico durante la chiamata ad Apache! Controlla la console.');
-  //     }
-  //   }
-  // };
-  // Riepilogo API
-  /**
-   * | Metodo | Endpoint               | Cosa fa                               |
-   * | ------ | ---------------------- | ------------------------------------- |
-   * | POST   | `/start-scan`          | Avvia la scansione (richiede URL)     |
-   * | GET    | `/scan-status/:idScan` | Controlla lo stato della scansione    |
-   * | GET    | `/result/:idScan`      | Recupera il file JSON della scansione |
-   */
-  async function startScan(url: string): Promise<number | null> {
-    try {
-      const res = await axios.post('http://192.168.179.3:5000/start-scan', { url });
-      return res.data.idScan;
-    } catch (err) {
-      console.error("Errore durante l'avvio della scansione:", err);
-      return null;
-    }
-  }
-
-  async function checkScanStatus(idScan: number): Promise<'processing' | 'done' | null> {
-    try {
-      const res = await axios.get(`http://192.168.179.3:5000/scan-status/${idScan}`);
-      return res.data.status;
-    } catch (err) {
-      console.error('Errore nel recupero dello stato:', err);
-      return null;
-    }
-  }
-
-  async function getScanResult(idScan: number): Promise<any> {
-    try {
-      const res = await axios.get(`http://192.168.179.3:5000/result/${idScan}`);
-      return res.data;
-    } catch (err) {
-      console.error('Errore nel recupero del risultato:', err);
-      return null;
-    }
-  }
-
-  async function startAndPoll(url: string) {
-    const idScan = await startScan(url);
-    if (!idScan) return;
-
-    const interval = setInterval(async () => {
-      const status = await checkScanStatus(idScan);
-      if (status === 'done') {
-        clearInterval(interval);
-        const result = await getScanResult(idScan);
-        console.log('✅ Risultato:', result);
-        // Puoi salvarlo nello stato o mostrarlo a schermo
-      } else if (status === 'processing') {
-        console.log('⏳ In attesa della fine della scansione...');
-      } else {
-        clearInterval(interval);
-        console.error('❌ Errore nel polling');
-      }
-    }, 5000);
-  }
-
   const handleButtonClick = (buttonType: ButtonType) => {
     onButtonClick(buttonType);
   };
@@ -174,7 +72,6 @@ export const FilterBar = ({ onButtonClick, selectedButton, isLoading }: PropsFil
                 leftIcon="🔍"
                 loading={isLoading[BUTTON_TYPES.SCAN_NOW]}
                 onClick={() => handleButtonClick(BUTTON_TYPES.SCAN_NOW)}
-                // onClick={() => handleButtonClick(BUTTON_TYPES.SCAN_NOW, 'http://example.com')}
               >
                 Scan Now
               </TargetsButton>
@@ -191,6 +88,7 @@ export const FilterBar = ({ onButtonClick, selectedButton, isLoading }: PropsFil
                 loading={isLoading[BUTTON_TYPES.SEARCH]}
                 onClick={() => handleButtonClick(BUTTON_TYPES.SEARCH)}
               >
+                {/* <FileSearchIcon className="w-4 h-4 text-grey-800" /> */}
                 Search and Filters
               </TargetsButton>
 

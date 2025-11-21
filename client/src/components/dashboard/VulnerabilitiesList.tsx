@@ -1,6 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Props } from '@/types/target.types';
+import api from '@/lib/axios';
+import { ApiResponse } from '@/types/server_response.types';
+import { CVEEntry } from '@/types/scanResult.types';
+import { useEffect, useState } from 'react';
 const vulnerabilities = [
   {
     id: 'CWE-78',
@@ -49,36 +53,108 @@ const vulnerabilities = [
 ];
 
 export const VulnerabilitiesList = ({ selectedTarget }: Props) => {
+  const [cveList, setCveList] = useState<
+    { id: string; severity: string; description: string; count: number }[]
+  >([]);
+
+  const severityColors: Record<string, string> = {
+    critical: 'bg-red-500',
+    high: 'bg-orange-500',
+    medium: 'bg-yellow-500',
+    low: 'bg-gray-500',
+  };
+
+  useEffect(() => {
+    if (!selectedTarget) return;
+
+    async function fetchCVEs() {
+      try {
+        const res = await api.get<ApiResponse<CVEEntry[]>>(`/target/${selectedTarget?.id}/cves`);
+
+        const grouped = groupCVEs(res.data.data);
+
+        setCveList(grouped);
+      } catch (err) {
+        console.error('Errore nel recupero delle CVE:', err);
+      }
+    }
+
+    fetchCVEs();
+    console.log('Selected Target cve changed: ', cveList);
+  }, [selectedTarget]);
+
+  function groupCVEs(cves: CVEEntry[]) {
+    const map = new Map<
+      string,
+      { id: string; severity: string; description: string; count: number }
+    >();
+
+    for (const cve of cves) {
+      const key = cve.vulnerabilityType;
+      if (!map.has(key)) {
+        map.set(key, {
+          id: key,
+          severity: cve.severity,
+          description: cve.description,
+          count: 1,
+        });
+      } else {
+        map.get(key)!.count++;
+      }
+    }
+
+    return Array.from(map.values());
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold text-gray-900">
           Top 10 Unpatched Vulnerabilities
         </CardTitle>
-        <Button
+
+        {/* <Button
           variant="ghost"
           className="text-xs bg-green-600 text-white hover:bg-green-700 px-2 py-1 h-6 rounded"
         >
           Hide charts
-        </Button>
+        </Button> */}
       </CardHeader>
+
       <CardContent>
-        <div className="space-y-2">
-          {vulnerabilities.map((vuln) => (
-            <div
-              key={vuln.id}
-              className={`${vuln.color} text-white px-3 py-2 rounded flex justify-between items-center`}
-            >
-              <div className="flex items-center space-x-3">
-                <span className="font-medium text-sm">{vuln.id}</span>
-                <span className="text-sm">{vuln.name}</span>
+        {!selectedTarget ? (
+          <p className="text-sm text-gray-500">Nessun target selezionato.</p>
+        ) : cveList.length === 0 ? (
+          <p className="text-sm text-gray-500">Nessuna CVE rilevata.</p>
+        ) : (
+          <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+            {cveList.map((vuln) => (
+              <div
+                key={vuln.id}
+                className={`${severityColors[vuln.severity]} text-white px-4 py-3 rounded`}
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <div className="flex items-center space-x-3">
+                    <a
+                      href={`https://nvd.nist.gov/vuln/detail/${vuln.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-sm underline hover:text-gray-200"
+                    >
+                      {vuln.id}
+                    </a>
+                  </div>
+
+                  <span className="bg-white bg-opacity-20 px-2 py-1 rounded text-xs font-medium">
+                    {vuln.count}
+                  </span>
+                </div>
+
+                <p className="text-xs text-white/90 leading-snug">{vuln.description}</p>
               </div>
-              <span className="bg-white bg-opacity-20 px-2 py-1 rounded text-xs font-medium">
-                {!selectedTarget ? 0 : vuln.count}
-              </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
