@@ -20,6 +20,7 @@ import {
   SettingsIcon,
   TrashIcon,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 type ButtonType = (typeof BUTTON_TYPES)[keyof typeof BUTTON_TYPES];
 
 export const TargetsTable = ({
@@ -31,6 +32,8 @@ export const TargetsTable = ({
   selectedButton,
 }: PropsTargets) => {
   const activePollings = new Set<number>(); // per tenere traccia di tutti i polling attivi
+  const navigate = useNavigate();
+
   /**
    * | Metodo | Endpoint               | Cosa fa                               |
    * | ------ | ---------------------- | ------------------------------------- |
@@ -249,6 +252,7 @@ export const TargetsTable = ({
     e.stopPropagation();
     console.log('Reports clicked for:', target.domain);
     // Implementa la logica per i report
+    navigate(`/dashboard/report/${target.lastScanId}`);
   };
 
   const handleDelete = async (e: React.MouseEvent, target: TargetView) => {
@@ -336,7 +340,7 @@ export const TargetsTable = ({
                             <span className="w-4 h-4 bg-green-500 rounded-sm"></span>
                           </div>
                         </div>
-                        <div className="text-sm text-gray-600">🇺🇸 {target.ip_domain}</div>
+                        <div className="text-sm text-gray-600">IPv4: {target.ip_domain}</div>
                         <div className="text-sm text-gray-600">
                           Next scan: {formatDateTime(target.nextScanStarts ?? '')} | Last scan:{' '}
                           {formatDateTime(target.lastScanEnded ?? '')}
@@ -372,6 +376,9 @@ export const TargetsTable = ({
                         </span>
                         <span className="bg-gray-500 text-white px-2 py-1 rounded text-xs font-medium">
                           {target.vulnerabilities.low}
+                        </span>
+                        <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
+                          {target.vulnerabilities.info}
                         </span>
                         {target.hasError && <span className="text-red-500 ml-2">⚠️</span>}
                       </div>

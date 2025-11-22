@@ -64,6 +64,7 @@ export const DashboardContent = ({
         high: allResults.filter((r) => r.severity.toLowerCase() === 'high').length,
         medium: allResults.filter((r) => r.severity.toLowerCase() === 'medium').length,
         low: allResults.filter((r) => r.severity.toLowerCase() === 'low').length,
+        info: allResults.filter((r) => r.severity.toLowerCase() === 'info').length,
       };
 
       // Status: running > failed > finished
@@ -261,6 +262,7 @@ export const DashboardContent = ({
           high: 0,
           medium: 0,
           low: 0,
+          info: 0,
         },
         hasError: false,
       });

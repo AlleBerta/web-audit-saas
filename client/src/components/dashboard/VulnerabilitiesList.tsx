@@ -62,6 +62,7 @@ export const VulnerabilitiesList = ({ selectedTarget }: Props) => {
     high: 'bg-orange-500',
     medium: 'bg-yellow-500',
     low: 'bg-gray-500',
+    info: 'bg-blue-500',
   };
 
   useEffect(() => {
