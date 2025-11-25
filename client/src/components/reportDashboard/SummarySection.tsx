@@ -2,17 +2,22 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { SummaryResponseProps } from '@/types/scanResult.types';
 import { Button } from '../ui/button';
+import { useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
+import { PrintableReport } from './PrintableReport';
+import { Download, FileQuestion } from 'lucide-react';
 
-interface SeverityCounts {
-  critical: number;
-  high: number;
-  medium: number;
-  low: number;
-  info: number;
-}
-
-export function SummarySection({ data }: SummaryResponseProps) {
-  if (!data) return <div>Dati mancanti...</div>;
+export function SummarySection({ data, onExportClick, isPrinting = false }: SummaryResponseProps) {
+  if (!data) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 text-slate-500">
+        {/* Icona Grigia (Slate), non verde */}
+        <FileQuestion className="w-12 h-12 mb-3 text-slate-400" />
+        <h3 className="text-lg font-semibold text-slate-700">Missing Data Report</h3>
+        <p className="text-sm">Impossible visualize the summary. Data might be not loaded.</p>
+      </div>
+    );
+  }
 
   // per Pie-chart in Severity Distribution
   const severityChart = [
@@ -78,8 +83,15 @@ export function SummarySection({ data }: SummaryResponseProps) {
     { name: 'Remaining', value: 100 - score, color: '#e2e8f0' }, // Grigio chiaro
   ];
 
-  // Per pdf
-  const downoladReport = () => {};
+  // ---------- Per pdf ----------
+  // 1. Creiamo un riferimento per il componente da stampare
+  const componentRef = useRef<HTMLDivElement>(null);
+
+  // 2. Configuriamo l'hook di stampa
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef, // Passiamo il ref creato
+    documentTitle: `Security_Report_${data?.meta?.target?.domain || 'scan'}`,
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -200,22 +212,28 @@ export function SummarySection({ data }: SummaryResponseProps) {
       </Card>
 
       {/* Download Report */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Download This Report</CardTitle>
-        </CardHeader>
-        <CardContent className="h-56">
-          <p></p>
-          <Button
-            onClick={(e) => {
-              downoladReport();
-            }}
-            className="bg-red-500 text-white hover:bg-red-700"
-          >
-            Scarica PDF
-          </Button>
-        </CardContent>
-      </Card>
+      {/* MOSTRA LA CARD SOLO SE NON STIAMO STAMPANDO */}
+      {!isPrinting && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Export Report</CardTitle>
+          </CardHeader>
+          <CardContent className="h-56 flex flex-col items-center justify-center text-center">
+            <p className="text-muted-foreground mb-4 max-w-md">
+              Generate a comprehensive PDF including both VA analysis and PT results in a
+              singleprofessional document.
+            </p>
+            <Button
+              onClick={onExportClick} // Chiamo la funzione del padre. La gestisce poi ReportView
+              size="lg"
+              className="bg-red-600 hover:bg-red-700 text-white gap-2 shadow-lg hover:shadow-xl transition-all"
+            >
+              <Download className="w-5 h-5" />
+              Download Report PDF
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

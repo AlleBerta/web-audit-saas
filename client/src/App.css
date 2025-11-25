@@ -40,3 +40,16 @@
 .read-the-docs {
   color: #888;
 }
+
+@media print {
+  /* Forza la stampa dei background colors (spesso i browser li tolgono per risparmiare inchiostro) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Nascondi elementi inutili se per caso finiscono nel print ref */
+  .no-print {
+    display: none !important;
+  }
+}

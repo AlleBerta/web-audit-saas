@@ -17,6 +17,8 @@ export interface CVEEntry {
 
 export interface SummaryResponseProps {
   data: FullReportResponse | null;
+  onExportClick?: () => void;
+  isPrinting?: boolean;
 }
 export interface ServerInfoProps {
   data?: FullReportMeta;
@@ -29,9 +31,11 @@ export interface OpenPortsProps {
 }
 export interface CveOverviewProps {
   data?: CveList[];
+  isPrinting?: boolean;
 }
 export interface ZapScanSectionProps {
   data?: ZapAlert[];
+  isPrinting?: boolean;
 }
 // Interfacce per le risposte alla chiamata API di ReportView
 export interface FullReportResponse {

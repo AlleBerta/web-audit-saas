@@ -6,7 +6,7 @@ import { useAuth } from '@/components/auth/AuthContext';
 
 function Nav() {
   const { user, isAuthenticated, logout } = useAuth();
-  console.log('NAV: isAuthenticated??? ', isAuthenticated);
+  // console.log('NAV: isAuthenticated??? ', isAuthenticated);
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -5,7 +5,7 @@ import { Badge } from '../ui/badge';
 import { getSeverityColor } from '@/lib/severityColorCve';
 import { CveDetailModal } from './CveDetailModal';
 
-export function CveOverview({ data }: CveOverviewProps) {
+export function CveOverview({ data, isPrinting = false }: CveOverviewProps) {
   if (!data || data.length === 0) {
     return (
       <div className="p-6 text-center border rounded-lg border-dashed text-muted-foreground bg-slate-50">
@@ -48,16 +48,19 @@ export function CveOverview({ data }: CveOverviewProps) {
         </div>
 
         {/* Search Bar */}
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Cerca CVE, prodotto..."
-            className="w-full pl-9 pr-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        {/* MOSTRA LA CARD SOLO SE NON STIAMO STAMPANDO */}
+        {!isPrinting && (
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Cerca CVE, prodotto..."
+              className="w-full pl-9 pr-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
       {/* --- TABELLA DATI --- */}

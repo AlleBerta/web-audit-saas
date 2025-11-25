@@ -1,96 +1,145 @@
-import { ZapScanSession } from '@/components/reportDashboard/ZapScanSession';
 import { CveOverview } from '@/components/reportDashboard/CveOverview';
 import { HeadersTable } from '@/components/reportDashboard/HeadersTable';
 import { OpenPorts } from '@/components/reportDashboard/OpenPorts';
 import PageHeader from '@/components/PageHeader';
 import { ServerInfo } from '@/components/reportDashboard/ServerInfo';
 import { SummarySection } from '@/components/reportDashboard/SummarySection';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import { ApiResponse } from '@/types/server_response.types';
 import { FullReportResponse } from '@/types/scanResult.types';
 import api from '@/lib/axios';
 import { toast } from '@/hooks/use-toast';
 import { useParams } from 'react-router-dom';
 import { Spinner } from '@/components/ui/spinner';
-import { Crosshair, ShieldCheck } from 'lucide-react';
+import { Crosshair, ShieldCheck, FileX, Download } from 'lucide-react';
 import { ReportFooter } from '@/components/ReportFooter';
+import { ZapScanSection } from '@/components/reportDashboard/ZapScanSection';
+import { PrintableReport } from '@/components/reportDashboard/PrintableReport';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function ReportView() {
   const { scanId } = useParams<{ scanId: string }>();
-  const numericScanId = Number(scanId);
+  const numericScanId = scanId ? Number(scanId) : NaN;
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Partiamo true per evitare flash
   const [fullReport, setFullReport] = useState<FullReportResponse | null>(null);
 
-  // Chiamata automatica su mount o sul cambio di scanId
+  // ----- Logica di stampa QUI nel genitore -----
+  // 1. Calcoliamo il nome del file dinamicamente
+  // Usiamo useMemo o lo calcoliamo direttamente nel render (è leggero)
+  const reportFileName = (() => {
+    if (!fullReport) return 'Security_Report';
+
+    // Puliamo il dominio (via https:// e via caratteri strani)
+    const rawDomain = fullReport.meta.target.domain || 'target';
+    const cleanDomain = rawDomain
+      .replace(/^https?:\/\//, '') // Rimuove protocollo
+      .replace(/[^a-zA-Z0-9.-]/g, '_'); // Sostituisce caratteri non sicuri con _
+
+    // Formattiamo la data (YYYY-MM-DD) prendendola dal timestamp del report
+    const dateStr = fullReport.meta.timestamp
+      ? new Date(fullReport.meta.timestamp).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
+
+    return `Security_Report_${cleanDomain}_${dateStr}`;
+  })();
+  const printRef = useRef<HTMLDivElement>(null);
+  // 2. Passiamo il nome calcolato a documentTitle
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: reportFileName,
+  });
+
+  // Fetch Data con protezione "isMounted"
   useEffect(() => {
-    console.log('scanId: ', scanId, 'loading: ', loading);
-    if (!isNaN(numericScanId)) {
-      fetchFullReport(numericScanId);
-    }
-  }, [scanId]);
+    let isMounted = true;
 
-  const fetchFullReport = async (scanId: number) => {
-    setLoading(true);
-
-    try {
-      const res = await api.get<ApiResponse<FullReportResponse>>(`/report/${scanId}/full`);
-
-      console.log('Full report:', res.data.data);
-      setFullReport(res.data.data);
-    } catch (error: any) {
-      console.error(error);
-
-      if (error.response) {
-        toast({
-          title: 'Error!',
-          description: error.response.data.message || 'Something went wrong...',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Connection Error',
-          description: 'Impossible to reach the server. Please, try again later.',
-          variant: 'destructive',
-        });
-      }
-    } finally {
+    if (isNaN(numericScanId)) {
       setLoading(false);
+      return;
     }
-  };
 
-  // Pulisce il dominio per essere inserito nel titolo
+    const fetchFullReport = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get<ApiResponse<FullReportResponse>>(`/report/${numericScanId}/full`);
+
+        if (isMounted && res.data?.data) {
+          setFullReport(res.data.data);
+          console.log('Full Report Data:', res.data.data); // Debug log
+        }
+      } catch (error: any) {
+        if (isMounted) {
+          console.error(error);
+          toast({
+            title: 'Error loading report',
+            description: error.response?.data?.message || 'Could not fetch report data.',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchFullReport();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [numericScanId]);
+
+  // Helper pulizia dominio
   function cleanDomain(url: string | undefined): string {
-    if (!url) return '';
+    if (!url) return 'Unknown Target';
     return url.replace(/^https?:\/\//, '').replace(/\/$/, '');
   }
 
+  // --- RENDERING ---
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner /> {/* o un PulseLoader di your choice */}
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50">
+        <Spinner size={40} />
+        <p className="text-muted-foreground animate-pulse">Loading security report...</p>
+      </div>
+    );
+  }
+
+  // Stato di errore: caricamento finito ma niente dati
+  if (!fullReport) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center p-8 bg-white rounded-xl shadow-sm border border-slate-200">
+          <FileX className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-slate-800">Report Not Found</h2>
+          <p className="text-slate-500 mt-2">Unable to load data for Scan ID: {scanId}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <PageHeader title={`Report: ${cleanDomain(fullReport?.meta.target.domain)}`} />
-      <SummarySection data={fullReport} />
-      <Tabs defaultValue="va" className="mt-4">
-        <div className="sticky top-4 z-50 flex justify-center w-full mb-8 pointer-events-none">
-          {/* 1. sticky top-4: Si ferma 1rem (16px) dal bordo alto.
-              2. z-50: Assicura che stia sopra a grafici e tabelle.
-              3. pointer-events-none: Il contenitore non blocca i click ai lati, 
-                ma riabilitiamo i click sulla TabsList con pointer-events-auto.
-          */}
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <PageHeader title={`Report: ${cleanDomain(fullReport?.meta?.target?.domain)}`} />
 
-          <TabsList className="pointer-events-auto h-auto p-1 bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 shadow-lg rounded-full">
+      <SummarySection
+        data={fullReport}
+        onExportClick={handlePrint} // <--- Passaggio della funzione
+      />
+
+      <Tabs defaultValue="va" className="mt-8">
+        {/* Sticky Header */}
+        <div className="sticky top-4 z-40 flex justify-center w-full mb-8 pointer-events-none">
+          <TabsList className="pointer-events-auto h-auto p-1 bg-slate-100/90 backdrop-blur-md border border-slate-200 shadow-lg rounded-full">
             <TabsTrigger
               value="va"
-              className="rounded-full px-6 py-2.5 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:shadow-sm transition-all flex items-center gap-2"
+              className="rounded-full px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all flex items-center gap-2"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>Vulnerability Assessment</span>
@@ -98,7 +147,7 @@ function ReportView() {
 
             <TabsTrigger
               value="pt"
-              className="rounded-full px-6 py-2.5 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:shadow-sm transition-all flex items-center gap-2"
+              className="rounded-full px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all flex items-center gap-2"
             >
               <Crosshair className="w-4 h-4" />
               <span>Penetration Testing</span>
@@ -106,18 +155,26 @@ function ReportView() {
           </TabsList>
         </div>
 
-        <TabsContent value="va">
+        {/* VA Content */}
+        <TabsContent value="va" className="space-y-8 animate-in fade-in duration-500">
           <ServerInfo data={fullReport?.meta} />
-          <HeadersTable data={fullReport?.va.headers} />
-          <OpenPorts data={fullReport?.va.ports.openPortsList} />
-          <CveOverview data={fullReport?.va.cve.cveList} />
+          <HeadersTable data={fullReport?.va?.headers} />
+          <OpenPorts data={fullReport?.va?.ports?.openPortsList} />
+          <CveOverview data={fullReport?.va?.cve?.cveList ?? []} />
         </TabsContent>
 
-        <TabsContent value="pt">
-          <ZapScanSession data={fullReport?.pt.alerts} />
+        {/* PT Content */}
+        <TabsContent value="pt" className="space-y-8 animate-in fade-in duration-500">
+          <ZapScanSection data={fullReport?.pt?.alerts ?? []} />
         </TabsContent>
       </Tabs>
+
       <ReportFooter />
+
+      {/* 3. Il componente nascosto vive QUI nel genitore, vicino ai dati completi */}
+      <div style={{ display: 'none' }}>
+        {fullReport && <PrintableReport data={fullReport} ref={printRef} />}
+      </div>
     </div>
   );
 }

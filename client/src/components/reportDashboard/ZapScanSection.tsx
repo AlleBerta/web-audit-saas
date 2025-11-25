@@ -8,7 +8,7 @@ const stripHtml = (html: string) => {
   return html.replace(/<[^>]*>?/gm, '');
 };
 
-export function ZapScanSession({ data }: ZapScanSectionProps) {
+export function ZapScanSection({ data, isPrinting = false }: ZapScanSectionProps) {
   if (!data || data.length === 0) {
     return (
       <div className="p-6 text-center border rounded-lg border-dashed text-muted-foreground bg-slate-50">
@@ -32,16 +32,22 @@ export function ZapScanSession({ data }: ZapScanSectionProps) {
 
       <div className="grid gap-4">
         {sortedAlerts.map((alert, index) => (
-          <ZapAlertItem key={`${alert.pluginid}-${index}`} alert={alert} />
+          <ZapAlertItem
+            key={`${alert.pluginid}-${index}`}
+            alert={alert}
+            forceOpen={isPrinting} // Passiamo l'ordine di forzare l'apertura
+          />
         ))}
       </div>
     </div>
   );
 }
 // Sottocomponente per la singola Card Espandibile
-function ZapAlertItem({ alert }: { alert: ZapAlert }) {
+function ZapAlertItem({ alert, forceOpen = false }: { alert: ZapAlert; forceOpen?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Se forceOpen è true (stampa), ignoriamo lo stato locale e mostriamo sempre
+  const isVisible = forceOpen || isOpen;
   return (
     <div
       className={`border rounded-lg bg-white transition-all duration-200 ${
@@ -51,7 +57,7 @@ function ZapAlertItem({ alert }: { alert: ZapAlert }) {
       {/* --- HEADER (Sempre visibile) --- */}
       <div
         className="p-4 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer gap-4 hover:bg-slate-50 rounded-t-lg"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !forceOpen && setIsOpen(!isOpen)} // Disabilita il click se stampiamo
       >
         <div className="flex items-start gap-4">
           {/* Badge Rischio */}
@@ -72,11 +78,14 @@ function ZapAlertItem({ alert }: { alert: ZapAlert }) {
           </div>
         </div>
 
-        <button className="text-slate-400">{isOpen ? <ChevronUp /> : <ChevronDown />}</button>
+        {/* Nascondi la freccia se stiamo stampando (non serve) */}
+        {!forceOpen && (
+          <button className="text-slate-400">{isOpen ? <ChevronUp /> : <ChevronDown />}</button>
+        )}
       </div>
 
       {/* --- BODY (Visibile solo se aperto) --- */}
-      {isOpen && (
+      {isVisible && (
         <div className="p-6 border-t bg-slate-50/50 space-y-6">
           {/* Descrizione & Soluzione */}
           <div className="grid md:grid-cols-2 gap-6">
