@@ -17,6 +17,7 @@ interface Config {
   JWT_PUBLIC_KEY: string;
   JWT_PRIVATE_KEY: string;
   API_BASE_URL: string;
+  SCAN_BASE_PATH: string;
 }
 
 const config: Config = {
@@ -48,6 +49,7 @@ const config: Config = {
     }
   })(),
   API_BASE_URL: `http://${String(process.env.FLASK_SERVER_IP)}:5000`,
+  SCAN_BASE_PATH: String(process.env.SCAN_BASE_PATH),
 };
 
 export default config;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
+// import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
+import PageHeader from '@/components/PageHeader';
 import { ProjectTabs } from '@/components/dashboard/ProjectTabs';
 import { DashboardContent } from '@/components/dashboard/DashboardContent';
 import { ProjectResponse } from '@/types/project.types';
@@ -64,14 +65,14 @@ const Dashboard = () => {
       console.log(error);
       if (error.response) {
         toast({
-          title: 'Errore!',
-          description: error.response.data.message || 'Qualcosa è andato storto',
+          title: 'Error!',
+          description: error.response.data.message || 'Something went wrong...',
           variant: 'destructive',
         });
       } else {
         toast({
-          title: 'Errore di connessione',
-          description: 'Impossibile contattare il server. Riprova più tardi.',
+          title: 'Connection Error',
+          description: 'Impossible to reach the server. Please, try again later.',
           variant: 'destructive',
         });
       }
@@ -93,7 +94,7 @@ const Dashboard = () => {
   }, []);
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
+      <PageHeader title="Your Projects" />
       <ProjectTabs
         tabs={tabs}
         activeProject={activeProject}

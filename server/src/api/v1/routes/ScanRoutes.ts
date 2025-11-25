@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { RequestHandler } from 'express';
-import { createScan, getCompletedScan, getStatusScan } from '../controllers/ScanController';
+import { createScan, getStatusScan } from '../controllers/ScanController';
+import { getCompletedScan } from '../controllers/ScanResultController';
 
 const router = Router();
 

@@ -5,6 +5,7 @@ import api from '@/lib/axios';
 import { ApiResponse } from '@/types/server_response.types';
 import { CVEEntry } from '@/types/scanResult.types';
 import { useEffect, useState } from 'react';
+import { severityColors } from '@/lib/severityColorCve';
 const vulnerabilities = [
   {
     id: 'CWE-78',
@@ -56,14 +57,6 @@ export const VulnerabilitiesList = ({ selectedTarget }: Props) => {
   const [cveList, setCveList] = useState<
     { id: string; severity: string; description: string; count: number }[]
   >([]);
-
-  const severityColors: Record<string, string> = {
-    critical: 'bg-red-500',
-    high: 'bg-orange-500',
-    medium: 'bg-yellow-500',
-    low: 'bg-gray-500',
-    info: 'bg-blue-500',
-  };
 
   useEffect(() => {
     if (!selectedTarget) return;

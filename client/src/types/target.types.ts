@@ -27,6 +27,7 @@ export interface TargetView {
     high: number;
     medium: number;
     low: number;
+    info: number;
   };
   hasError: boolean;
 }

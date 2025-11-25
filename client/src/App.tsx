@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
+import ReportView from './pages/ReportView';
 import { AuthProvider } from './components/auth/AuthContext';
 const queryClient = new QueryClient();
 
@@ -28,6 +29,14 @@ const App = () => (
               element={
                 <RequireAuth>
                   <Dashboard />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/dashboard/report/:scanId"
+              element={
+                <RequireAuth>
+                  <ReportView />
                 </RequireAuth>
               }
             />
