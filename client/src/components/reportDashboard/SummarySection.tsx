@@ -113,6 +113,9 @@ export function SummarySection({ data, onExportClick, isPrinting = false }: Summ
                 paddingAngle={3}
                 label={({ value }) => `${value}`}
                 labelLine={false} // Opzionale: rimuove le linee se i numeri sono dentro/vicini
+                // Se stiamo stampando, spegni l'animazione (false).
+                // Se siamo a video, lasciala accesa (true).
+                isAnimationActive={!isPrinting}
               >
                 {severityChart.map((_entry, index) => (
                   <Cell key={index} fill={_entry.color} />
@@ -156,6 +159,9 @@ export function SummarySection({ data, onExportClick, isPrinting = false }: Summ
                 paddingAngle={0}
                 dataKey="value"
                 stroke="none" // Rimuove bordi bianchi
+                // Se stiamo stampando, spegni l'animazione (false).
+                // Se siamo a video, lasciala accesa (true).
+                isAnimationActive={!isPrinting}
               >
                 {gaugeData.map((entry, index) => (
                   <Cell key={index} fill={entry.color} />
@@ -172,7 +178,7 @@ export function SummarySection({ data, onExportClick, isPrinting = false }: Summ
             >
               {score}%
             </div>
-            <p className="text-sm text-gray-500 mt-1">Valutazione Complessiva</p>
+            <p className="text-sm text-gray-500 mt-1">Overall Assessment</p>
           </div>
         </CardContent>
       </Card>

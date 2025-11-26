@@ -7,7 +7,11 @@ import { getMethodBadgeVariant } from '@/lib/methodColor';
 import { Server } from 'lucide-react';
 
 export function ServerInfo({ data }: ServerInfoProps) {
+  // AGGIUNGI QUESTO LOG
+  console.log('SERVER INFO DATA RICEVUTI:', data);
+
   if (!data) {
+    console.log('Server INFO: data is null or undefined');
     return (
       <div className="p-8 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 text-slate-500">
         {/* Icona Grigia (Slate), non verde */}
@@ -20,6 +24,7 @@ export function ServerInfo({ data }: ServerInfoProps) {
 
   // Se manca data, O manca target, O target è vuoto... mostra fallback
   if (!data?.target) {
+    console.log('ServerInfo: ', data);
     return (
       <div className="p-4 border border-dashed rounded-lg bg-slate-50 text-slate-400 text-sm flex items-center gap-2">
         <Server className="w-4 h-4" />

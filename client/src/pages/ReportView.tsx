@@ -51,6 +51,33 @@ function ReportView() {
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: reportFileName,
+    // CSS INIETTATO SOLO AL MOMENTO DELLA STAMPA
+    pageStyle: `
+      @page {
+        size: A4;
+        margin: 15mm; /* 1.5cm di margine bianco attorno al foglio */
+      }
+
+      @media print {
+        /* FORZA LA STAMPA DEI COLORI DI SFONDO E TESTO */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+
+        /* Gestione interruzioni pagina intelligenti */
+        tr, td, div {
+          break-inside: avoid; /* Cerca di non spezzare le righe a metà */
+        }
+
+        /* Rimuove eventuali scrollbar o sfondi strani del body */
+        body {
+          background-color: #ffffff !important;
+          margin: 0 !important;
+        }
+      }
+    `,
   });
 
   // Fetch Data con protezione "isMounted"
@@ -174,6 +201,13 @@ function ReportView() {
       {/* 3. Il componente nascosto vive QUI nel genitore, vicino ai dati completi */}
       <div style={{ display: 'none' }}>
         {fullReport && <PrintableReport data={fullReport} ref={printRef} />}
+      </div>
+
+      {/* MODIFICA TEMPORANEA PER DEBUG */}
+      {/* Togli style={{ display: 'none' }} e metti una classe visibile */}
+      <div className="border-4 border-red-500 mt-10">
+        <h2 className="text-red-500 font-bold p-2 text-center">--- ZONA DEBUG STAMPA ---</h2>
+        {fullReport && <PrintableReport ref={printRef} data={fullReport} />}
       </div>
     </div>
   );

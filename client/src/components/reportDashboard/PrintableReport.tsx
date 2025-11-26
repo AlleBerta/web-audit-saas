@@ -16,7 +16,7 @@ interface PrintableReportProps {
 export const PrintableReport = React.forwardRef<HTMLDivElement, PrintableReportProps>(
   ({ data }, ref) => {
     return (
-      <div ref={ref} className="p-8 bg-white text-slate-900 print-container">
+      <div ref={ref} className="p-2 bg-white text-slate-900 print-container">
         {/* --- FRONTESPIZIO / HEADER PDF con descrizione --- */}
         <div className="mb-10 border-b pb-6">
           <div className="flex justify-between items-start">
@@ -66,7 +66,7 @@ export const PrintableReport = React.forwardRef<HTMLDivElement, PrintableReportP
         <div className="space-y-8 mb-12">
           <section className="break-inside-avoid">
             <h3 className="font-bold text-lg mb-4">Server & Info</h3>
-            <ServerInfo data={data} />
+            <ServerInfo data={data?.meta} />
           </section>
 
           <section className="break-inside-avoid">
