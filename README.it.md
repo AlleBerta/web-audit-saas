@@ -50,7 +50,7 @@ Il progetto è ispirato a piattaforme come [ImmuniWeb](https://www.immuniweb.com
 
 ### 🗄️ Schema del Database
 
-![Schema ER del Database](./server/docs/db-schema.png)
+![Schema ER del Database](./server/docs/web_audit_saas_dbdocs.png)
 
 All'interno della cartella [`server/docs`](server/docs) è presente anche:
 

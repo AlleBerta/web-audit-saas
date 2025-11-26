@@ -48,7 +48,7 @@ Inspired by platforms like [ImmuniWeb](https://www.immuniweb.com/), this project
 
 ### 🗄️ Database Schema
 
-![Database ER Diagram](./server/docs/db-schema.png)
+![Database ER Diagram](./server/docs/web_audit_saas_dbdocs.png)
 
 Inside the [`server/docs`](server/docs) folder you can also find:
 
