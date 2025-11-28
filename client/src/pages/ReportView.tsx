@@ -205,10 +205,10 @@ function ReportView() {
 
       {/* MODIFICA TEMPORANEA PER DEBUG */}
       {/* Togli style={{ display: 'none' }} e metti una classe visibile */}
-      <div className="border-4 border-red-500 mt-10">
+      {/* <div className="border-4 border-red-500 mt-10">
         <h2 className="text-red-500 font-bold p-2 text-center">--- ZONA DEBUG STAMPA ---</h2>
         {fullReport && <PrintableReport ref={printRef} data={fullReport} />}
-      </div>
+      </div> */}
     </div>
   );
 }
